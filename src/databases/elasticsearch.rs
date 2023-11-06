@@ -89,6 +89,12 @@ impl PrepareVectorDatabase for Elasticsearch {
                 Method::PUT,
                 [] as [&str; 0],
                 &json!({
+                    "settings": {
+                        "index": {
+                            "number_of_shards": 3,
+                            "number_of_replicas": 1,
+                        },
+                    },
                     "mappings": {
                         "dynamic": "strict",
                         "properties": {
@@ -117,8 +123,8 @@ impl PrepareVectorDatabase for Elasticsearch {
                             "link": {
                                 "type": "keyword"
                             },
-                        }
-                    }
+                        },
+                    },
                 }),
             )
             .await?;

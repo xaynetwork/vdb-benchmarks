@@ -40,24 +40,25 @@ schema content {
         field tags type array<string> {
             # like ES each field of an array is indexed separately
             indexing: summary | attribute
-            match {
-                # needed so that string comparison using `contains` is a exact match
-                # instead of checking tokenized/stemed word overlap
-                exact
-            }
+            # needed so that string comparison using `contains` is a exact match
+            # instead of checking tokenized/stemed word overlap
+            match: exact
+            # hints to vespa that it's only used for filtering
+            rank: filter
+
         }
 
         field authors type array<string> {
             indexing: summary | attribute
-            match {
-                exact
-            }
+            match: exact
+            rank: filter
         }
 
         # time in unix epoch UTC
         field publication_date type long {
             # there is no date time, so we use UTC+0 unix epoch timestamps in seconds
             indexing: summary | attribute
+            rank: filter
         }
 
         field link type string {

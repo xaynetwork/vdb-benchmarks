@@ -26,7 +26,7 @@
     </container>
 
     <content id="content" version="1.0">
-        <min-redundancy>3</min-redundancy>
+        <min-redundancy>1</min-redundancy>
         <engine>
             <proton>
                 <searchable-copies>3</searchable-copies>

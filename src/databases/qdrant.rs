@@ -121,7 +121,10 @@ impl PrepareVectorDatabase for Qdrant {
                         ..OptimizersConfigDiff::default()
                     }),
                     shard_number: Some(3),
-                    replication_factor: Some(1),
+                    // A replication factor of 2 means 2 copies are stored without that
+                    // every node failure is data loss. For elastic/vespa you instead specify
+                    // the number of additional copies, i.e. 1.
+                    replication_factor: Some(2),
                     vectors_config: Some(VectorsConfig {
                         config: Some(vectors_config::Config::Params(VectorParams {
                             //TODO parameterize
