@@ -97,7 +97,7 @@ pub async fn ingest_database(
             nr_ingested_entries as f32 / nr_document as f32 * 100.
         );
     }
-    eprintln!("finish ingestion");
+    eprintln!("finish uploading, waiting for index to be ready");
     database
         .finish_mass_ingestion(Duration::from_secs(900))
         .await?;

@@ -112,46 +112,30 @@ impl PrepareVectorDatabase for Qdrant {
                     hnsw_config: Some(HnswConfigDiff {
                         m: Some(16),
                         ef_construct: Some(100),
-                        full_scan_threshold: None,
-                        max_indexing_threads: None,
                         on_disk: Some(false),
-                        payload_m: None,
+                        ..HnswConfigDiff::default()
                     }),
-                    wal_config: None,
                     optimizers_config: Some(OptimizersConfigDiff {
-                        deleted_threshold: None,
-                        vacuum_min_vector_number: None,
-                        default_segment_number: None,
-                        max_segment_size: None,
                         memmap_threshold: Some(6_000_000),
-                        indexing_threshold: None,
-                        flush_interval_sec: None,
-                        max_optimization_threads: None,
+                        ..OptimizersConfigDiff::default()
                     }),
                     shard_number: Some(3),
                     replication_factor: Some(1),
-                    on_disk_payload: None,
-                    timeout: None,
                     vectors_config: Some(VectorsConfig {
                         config: Some(vectors_config::Config::Params(VectorParams {
                             //TODO parameterize
                             size: self.vector_size,
                             distance: Distance::Euclid as _,
-                            hnsw_config: None,
-                            quantization_config: None,
-                            on_disk: None,
+                            ..VectorParams::default()
                         })),
                     }),
-                    write_consistency_factor: None,
-                    init_from_collection: None,
-                    quantization_config: None, /*Some(QuantizationConfig {
-                                                   quantization: Some(Quantization::Scalar(ScalarQuantization {
-                                                       r#type: QuantizationType::Int8 as _,
-                                                       quantile: Some(1.0),
-                                                       // use default from other configs
-                                                       always_ram: None,
-                                                   })),
-                                               }),*/
+                    quantization_config: Some(QuantizationConfig {
+                        quantization: Some(Quantization::Scalar(ScalarQuantization {
+                            r#type: QuantizationType::Int8 as _,
+                            ..ScalarQuantization::default()
+                        })),
+                    }),
+                    ..CreateCollection::default()
                 })
                 .await?;
 
@@ -264,16 +248,12 @@ impl QueryVectorDatabase for Qdrant {
                         return_payload,
                     )),
                 }),
-                params: None,
-                score_threshold: None,
-                offset: None,
-                vector_name: None,
-                with_vectors: None,
                 read_consistency: Some(ReadConsistency {
                     value: Some(read_consistency::Value::Type(
                         ReadConsistencyType::Quorum as _,
                     )),
                 }),
+                ..SearchPoints::default()
             })
             .await?;
 
@@ -320,11 +300,7 @@ fn qdrant_match_any_labels_condition(field: &str, labels: &Labels) -> Option<Con
                         strings: labels.to_uuid_string_vec(),
                     })),
                 }),
-                range: None,
-                geo_bounding_box: None,
-                geo_radius: None,
-                values_count: None,
-                geo_polygon: None,
+                ..FieldCondition::default()
             })),
         })
     }
@@ -347,10 +323,7 @@ fn qdrant_date_filter(
                 gte: lower_bound.map(|bound| bound.timestamp() as _),
                 lte: upper_bound.map(|bound| bound.timestamp() as _),
             }),
-            geo_bounding_box: None,
-            geo_radius: None,
-            values_count: None,
-            geo_polygon: None,
+            ..FieldCondition::default()
         })),
     });
 
