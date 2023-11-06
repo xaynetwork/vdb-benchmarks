@@ -12,15 +12,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{fmt::Write, future::Future, time::Duration};
+use std::{cmp::min, collections::HashMap, fmt::Write, future::Future, time::Duration};
 
-use anyhow::{bail, Error};
+use anyhow::{anyhow, bail, Error};
 use async_trait::async_trait;
 use reqwest::{Client, Method, Response};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use tokio::task::JoinSet;
 use url::Url;
+use uuid::Uuid;
 
 use crate::{
     benchmarks::QueryVectorDatabase,
@@ -44,11 +45,13 @@ impl Vespa {
             bail!("port pattern only supports nodes [0;9]");
         }
         let port = 8080 + node_id;
+        let namespace = "default".into();
+        let document_type = "content".into();
         Ok(Vespa {
             client: Client::builder().http2_prior_knowledge().build()?,
             base_url: format!("http://localhost:{port}/").parse()?,
-            namespace: "default".into(),
-            document_type: "content".into(),
+            namespace,
+            document_type,
         })
     }
 
@@ -87,34 +90,60 @@ impl QueryVectorDatabase for Vespa {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
-    ) -> Result<(), Error> {
-        let response = self
+    ) -> Result<Vec<Uuid>, Error> {
+        let query = yql_build_query(k, ef, vector, payload, return_payload)?;
+        let root = self
             //Hint: The trailing "" is important the path has to be /search/ not /search
-            .json_request(
-                Method::POST,
-                ["search", ""],
-                &yql_build_query(k, ef, vector, payload, return_payload)?,
-            )
-            .await?;
+            .json_request(Method::POST, ["search", ""], &query)
+            .await?
+            .json::<SearchResult>()
+            .await?
+            .root;
 
-        let response: Value = response.json().await?;
-
-        // very simple sanity check
-        let Some(_) = response
-            .get("root")
-            .and_then(|o| o.get("fields"))
-            .and_then(|o| o.get("totalCount"))
-            .and_then(|o| o.as_i64())
-        else {
-            bail!("unexpected response: {response}");
-        };
-
-        if let Some(error) = response.get("root").and_then(|o| o.get("errors")) {
-            bail!("error response: {error}");
+        let total_count = root.fields.total_count;
+        let got_count = root.children.len();
+        if min(total_count, k) != got_count {
+            bail!("malformed result({total_count} != {got_count}): {root:?}");
         }
 
-        Ok(())
+        root.children
+            .into_iter()
+            .map(|child| {
+                child
+                    .fields
+                    .get("id")
+                    .and_then(|o| o.as_str())
+                    .ok_or_else(|| anyhow!("malformed or missing id field: {:?}", child))?
+                    .parse()
+                    .map_err(Error::from)
+            })
+            .collect()
     }
+}
+
+#[derive(Deserialize, Debug)]
+struct SearchResult {
+    root: Root,
+}
+
+#[derive(Deserialize, Debug)]
+struct Root {
+    #[serde(default)]
+    children: Vec<Child>,
+    fields: RootFields,
+}
+
+#[derive(Deserialize, Debug)]
+struct RootFields {
+    #[serde(rename = "totalCount")]
+    total_count: usize,
+}
+
+#[derive(Deserialize, Debug)]
+struct Child {
+    // WARNING: we can't use this id it's not useful if the whole result is fetched from memory
+    // id: String,
+    fields: HashMap<String, Value>,
 }
 
 fn yql_build_query(
@@ -124,7 +153,7 @@ fn yql_build_query(
     payload: &QueryPayload,
     return_payload: bool,
 ) -> Result<Value, Error> {
-    let selector = if return_payload { " * " } else { " true " };
+    let selector = if return_payload { " * " } else { " id " };
     let explore_additional_hits = ef - k;
     let mut query =
         format!("select{selector}from content where {{hnsw.exploreAdditionalHits:{explore_additional_hits}, targetHits:{k}}}nearestNeighbor(embedding, query_embedding)");
@@ -238,6 +267,7 @@ impl PrepareVectorDatabase for Vespa {
                 ],
                 &json!({
                     "fields": {
+                        "id": id,
                         "embedding": vector,
                         "publication_date": payload.publication_date.timestamp(),
                         "authors": payload.authors.to_uuid_string_vec(),
@@ -396,7 +426,7 @@ mod tests {
             res,
             json!({
                 "yql": concat!(
-                    "select true from content where",
+                    "select id from content where",
                     " {hnsw.exploreAdditionalHits:10, targetHits:10}nearestNeighbor(embedding, query_embedding)",
                     " and range(publication_date, -Infinity, 3661)",
                 ),

@@ -170,3 +170,8 @@ bench provider:
 
 ingest provider:
     cargo run --bin ingest -- --vectors ./resources/gist-960-euclidean.hdf5 --provider "{{provider}}"
+
+cycle provider:
+    {{just_executable()}} service down "{{provider}}"
+    {{just_executable()}} volume recreate "{{provider}}"
+    {{just_executable()}} service up "{{provider}}"

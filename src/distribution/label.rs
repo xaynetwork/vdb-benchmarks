@@ -24,7 +24,7 @@ use super::{choice::IdxChoiceDistribution, ids::index_to_fake_uuid};
 
 #[derive(PartialEq, Serialize, Deserialize)]
 #[repr(transparent)]
-pub struct Label(pub usize);
+pub struct Label(pub u64);
 
 impl Display for Label {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -84,7 +84,7 @@ impl Population {
 
 impl Distribution<Label> for Population {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Label {
-        Label(self.distribution.sample(rng))
+        Label(self.distribution.sample(rng).try_into().unwrap())
     }
 }
 

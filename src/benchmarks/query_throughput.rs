@@ -64,7 +64,7 @@ pub fn benchmark(
     let rt = &Runtime::new()?;
     let mut group = c.benchmark_group(inputs.database.name());
 
-    for k in [20, 50, 80] {
+    for k in [10, 50, 100] {
         bench(
             &mut group,
             rt,
@@ -86,8 +86,22 @@ pub fn benchmark(
         &inputs,
         ingestion_parameters,
         QueryParameters {
-            k: 10,
+            k: 100,
             fetch_payload: true,
+            ef: 100,
+            number_of_tasks: 5,
+            queries_per_task: 10,
+        },
+    );
+
+    bench(
+        &mut group,
+        rt,
+        &inputs,
+        ingestion_parameters,
+        QueryParameters {
+            k: 10,
+            fetch_payload: false,
             ef: 100,
             number_of_tasks: 5,
             queries_per_task: 10,

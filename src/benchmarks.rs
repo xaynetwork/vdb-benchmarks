@@ -18,6 +18,7 @@ use std::fmt::{self, Display};
 
 use anyhow::Error;
 use async_trait::async_trait;
+use uuid::Uuid;
 
 use crate::distribution::QueryPayload;
 
@@ -69,5 +70,5 @@ pub trait QueryVectorDatabase: Send + Sync + 'static {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
-    ) -> Result<(), Error>;
+    ) -> Result<Vec<Uuid>, Error>;
 }

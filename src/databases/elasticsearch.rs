@@ -14,13 +14,14 @@
 
 use std::time::Duration;
 
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use async_trait::async_trait;
 use derive_more::{Deref, DerefMut};
 use reqwest::{Client, Method, Response, StatusCode};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use url::Url;
+use uuid::Uuid;
 
 use crate::{
     benchmarks::QueryVectorDatabase,
@@ -202,27 +203,41 @@ impl QueryVectorDatabase for Elasticsearch {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
-    ) -> Result<(), Error> {
-        let results: Value = self
+    ) -> Result<Vec<Uuid>, Error> {
+        let mut results = self
             .json_request(
                 Method::POST,
                 ["_search"],
                 &ElasticQuery::new(k, ef, vector, payload, return_payload),
             )
             .await?
-            .json()
-            .await?;
+            .json::<SearchResult>()
+            .await?
+            .hits
+            .hits;
 
-        //minimal sanity check
-        results
-            .get("hits")
-            .and_then(|o| o.get("total"))
-            .and_then(|o| o.get("value"))
-            .and_then(|o| o.as_i64())
-            .ok_or_else(|| anyhow!("unexpected response: {results}"))?;
+        results.sort_by(|l, r| l.score.total_cmp(&r.score));
 
-        Ok(())
+        Ok(results.into_iter().map(|hit| hit.id).collect())
     }
+}
+
+#[derive(Deserialize)]
+struct SearchResult {
+    hits: Hits,
+}
+
+#[derive(Deserialize)]
+struct Hits {
+    hits: Vec<Hit>,
+}
+
+#[derive(Deserialize)]
+struct Hit {
+    #[serde(rename = "_id")]
+    id: Uuid,
+    #[serde(rename = "_score")]
+    score: f32,
 }
 
 #[derive(Serialize)]

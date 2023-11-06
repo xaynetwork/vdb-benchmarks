@@ -7,6 +7,12 @@ schema content {
 
     document content {
 
+        # See: https://docs.vespa.ai/en/document-v1-api-guide.html#troubleshooting 3rd bullet point
+        # WARNING: can not be called id
+        field id type string {
+            indexing: summary
+        }
+
         field embedding type tensor<float>(x[960]) {
             # summary == allow returning the vector
             # index == allows using it as main search/ranking feature

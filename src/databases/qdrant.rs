@@ -30,6 +30,7 @@ use qdrant_client::{
     },
 };
 use tokio::time::sleep;
+use uuid::Uuid;
 
 use crate::{
     benchmarks::QueryVectorDatabase,
@@ -238,8 +239,9 @@ impl QueryVectorDatabase for Qdrant {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
-    ) -> Result<(), Error> {
-        self.client
+    ) -> Result<Vec<Uuid>, Error> {
+        let result = self
+            .client
             .search_points(&SearchPoints {
                 collection_name: self.collection.clone(),
                 vector: vector.into(),
@@ -263,7 +265,19 @@ impl QueryVectorDatabase for Qdrant {
             })
             .await?;
 
-        Ok(())
+        result
+            .result
+            .into_iter()
+            .map(|entry| {
+                let Some(PointId {
+                    point_id_options: Some(PointIdOptions::Uuid(uuid)),
+                }) = entry.id
+                else {
+                    bail!("document without uuid: {:?}", entry);
+                };
+                Ok(uuid.parse()?)
+            })
+            .collect()
     }
 }
 

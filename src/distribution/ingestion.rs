@@ -85,7 +85,7 @@ pub async fn ingest_database(
                     .by_ref()
                     .take(BATCH_SIZE)
                     .map(|(idx, (vector, payload))| IngestionInfo {
-                        id: index_to_fake_uuid(idx),
+                        id: index_to_fake_uuid(idx as _),
                         vector,
                         payload,
                     }),

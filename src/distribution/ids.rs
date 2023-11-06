@@ -16,7 +16,7 @@ use std::iter;
 
 use uuid::Uuid;
 
-pub fn index_to_fake_uuid(id: usize) -> Uuid {
+pub fn index_to_fake_uuid(id: u64) -> Uuid {
     let mut bytes = [0u8; 16];
     for (idx, byte) in iter::repeat(id.to_be_bytes())
         .flatten()
@@ -26,4 +26,27 @@ pub fn index_to_fake_uuid(id: usize) -> Uuid {
         bytes[idx] = byte;
     }
     uuid::Builder::from_random_bytes(bytes).into_uuid()
+}
+
+pub fn fake_uuid_to_index(uuid: Uuid) -> u64 {
+    let mut bytes: [u8; 8] = uuid.as_bytes()[8..].try_into().unwrap();
+    // remove uuid type/version flags
+    bytes[0] = 0;
+    u64::from_be_bytes(bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_index_to_uuid_conversion_is_okay() {
+        assert_eq!(1 << 54, fake_uuid_to_index(index_to_fake_uuid(1 << 54)));
+        assert_eq!(
+            (1 << 54) - 1,
+            fake_uuid_to_index(index_to_fake_uuid((1 << 54) - 1))
+        );
+        assert_eq!(1, fake_uuid_to_index(index_to_fake_uuid(1)));
+        assert_eq!(0, fake_uuid_to_index(index_to_fake_uuid(0)));
+    }
 }
