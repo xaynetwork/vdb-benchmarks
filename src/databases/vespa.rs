@@ -82,6 +82,8 @@ impl QueryVectorDatabase for Vespa {
 
     async fn query(
         &self,
+        k: usize,
+        ef: usize,
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
@@ -91,7 +93,7 @@ impl QueryVectorDatabase for Vespa {
             .json_request(
                 Method::POST,
                 ["search", ""],
-                &yql_build_query(vector, payload, return_payload)?,
+                &yql_build_query(k, ef, vector, payload, return_payload)?,
             )
             .await?;
 
@@ -116,13 +118,16 @@ impl QueryVectorDatabase for Vespa {
 }
 
 fn yql_build_query(
+    k: usize,
+    ef: usize,
     vector: &[f32],
     payload: &QueryPayload,
     return_payload: bool,
 ) -> Result<Value, Error> {
     let selector = if return_payload { " * " } else { " true " };
+    let explore_additional_hits = ef - k;
     let mut query =
-        format!("select{selector}from content where {{targetHits:100}}nearestNeighbor(embedding, query_embedding)");
+        format!("select{selector}from content where {{hnsw.exploreAdditionalHits:{explore_additional_hits}, targetHits:{k}}}nearestNeighbor(embedding, query_embedding)");
     yql_append_date_range(&mut query, "publication_date", &payload.publication_date)?;
     yql_append_label_filter(&mut query, "authors", &payload.authors)?;
     yql_append_label_filter(&mut query, "tags", &payload.tags)?;
@@ -131,7 +136,7 @@ fn yql_build_query(
         "yql": query,
         "ranking.profile": "ann",
         "input.query(query_embedding)": vector,
-        "hits": 100,
+        "hits": k,
     }))
 }
 
@@ -262,6 +267,8 @@ mod tests {
     #[test]
     fn test_query_building() {
         let res = yql_build_query(
+            10,
+            22,
             &[2., 4., 6.],
             &QueryPayload {
                 publication_date: DateFilter {
@@ -286,7 +293,7 @@ mod tests {
             json!({
                 "yql": concat!(
                     "select * from content where",
-                    " {targetHits:100}nearestNeighbor(embedding, query_embedding)",
+                    " {hnsw.exploreAdditionalHits:12, targetHits:10}nearestNeighbor(embedding, query_embedding)",
                     " and range(publication_date, 3661, 1107309722)",
                     " and (authors contains \"00000000-0000-400c-8000-00000000000c\" or authors contains \"00000000-0000-4005-8000-000000000005\")",
                     " and !(authors contains \"00000000-0000-4003-8000-000000000003\")",
@@ -294,11 +301,14 @@ mod tests {
                     " and !(tags contains \"00000000-0000-4001-8000-000000000001\" or tags contains \"00000000-0000-4141-8000-000000000141\")"
                 ),
                 "input.query(query_embedding)": [2., 4., 6.],
-                "ranking": "ann",
+                "ranking.profile": "ann",
+                "hits": 10,
             })
         );
 
         let res = yql_build_query(
+            10,
+            25,
             &[2., 4., 6.],
             &QueryPayload {
                 publication_date: DateFilter {
@@ -323,17 +333,20 @@ mod tests {
             json!({
                 "yql": concat!(
                     "select * from content where",
-                    " {targetHits:100}nearestNeighbor(embedding, query_embedding)",
+                    " {hnsw.exploreAdditionalHits:15, targetHits:10}nearestNeighbor(embedding, query_embedding)",
                     " and range(publication_date, 3661, Infinity)",
                     " and !(authors contains \"00000000-0000-4003-8000-000000000003\")",
                     " and (tags contains \"00000000-0000-4007-8000-000000000007\")",
                 ),
                 "input.query(query_embedding)": [2., 4., 6.],
-                "ranking": "ann",
+                "ranking.profile": "ann",
+                "hits": 10,
             })
         );
 
         let res = yql_build_query(
+            15,
+            20,
             &[2., 4., 6.],
             &QueryPayload {
                 publication_date: DateFilter::default(),
@@ -349,14 +362,17 @@ mod tests {
             json!({
                 "yql": concat!(
                     "select * from content where",
-                    " {targetHits:100}nearestNeighbor(embedding, query_embedding)",
+                    " {hnsw.exploreAdditionalHits:5, targetHits:15}nearestNeighbor(embedding, query_embedding)",
                 ),
                 "input.query(query_embedding)": [2., 4., 6.],
-                "ranking": "ann",
+                "ranking.profile": "ann",
+                "hits": 15,
             })
         );
 
         let res = yql_build_query(
+            10,
+            20,
             &[2., 4., 6.],
             &QueryPayload {
                 publication_date: DateFilter {
@@ -380,12 +396,13 @@ mod tests {
             res,
             json!({
                 "yql": concat!(
-                    "select from content where",
-                    " {targetHits:100}nearestNeighbor(embedding, query_embedding)",
+                    "select true from content where",
+                    " {hnsw.exploreAdditionalHits:10, targetHits:10}nearestNeighbor(embedding, query_embedding)",
                     " and range(publication_date, -Infinity, 3661)",
                 ),
                 "input.query(query_embedding)": [2., 4., 6.],
-                "ranking": "ann",
+                "ranking.profile": "ann",
+                "hits": 10,
             })
         );
     }

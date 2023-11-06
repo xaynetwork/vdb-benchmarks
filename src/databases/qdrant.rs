@@ -25,8 +25,8 @@ use qdrant_client::{
         vectors_config, with_payload_selector, CollectionStatus, Condition, CreateCollection,
         Distance, FieldCondition, Filter, HnswConfigDiff, ListValue, Match, OptimizersConfigDiff,
         PointId, PointStruct, QuantizationConfig, QuantizationType, Range, ReadConsistency,
-        ReadConsistencyType, RepeatedStrings, ScalarQuantization, SearchPoints, Value, Vector,
-        VectorParams, Vectors, VectorsConfig, WithPayloadSelector,
+        ReadConsistencyType, RepeatedStrings, ScalarQuantization, SearchParams, SearchPoints,
+        Value, Vector, VectorParams, Vectors, VectorsConfig, WithPayloadSelector,
     },
 };
 use tokio::time::sleep;
@@ -233,6 +233,8 @@ impl QueryVectorDatabase for Qdrant {
 
     async fn query(
         &self,
+        k: usize,
+        ef: usize,
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
@@ -242,7 +244,11 @@ impl QueryVectorDatabase for Qdrant {
                 collection_name: self.collection.clone(),
                 vector: vector.into(),
                 filter: qdrant_filter(payload),
-                limit: 100,
+                limit: k as _,
+                params: Some(SearchParams {
+                    hnsw_ef: Some(ef as _),
+                    ..SearchParams::default()
+                }),
                 with_payload: Some(WithPayloadSelector {
                     selector_options: Some(with_payload_selector::SelectorOptions::Enable(
                         return_payload,

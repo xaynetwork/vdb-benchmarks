@@ -64,6 +64,8 @@ pub trait QueryVectorDatabase: Send + Sync + 'static {
     fn name(&self) -> &str;
     async fn query(
         &self,
+        k: usize,
+        ef: usize,
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,

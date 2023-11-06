@@ -144,7 +144,7 @@ fn bench<M, DB>(
                                 .take(queries_per_task)
                             {
                                 database
-                                    .query(&vectors[idx], &payloads[idx], fetch_payload)
+                                    .query(k, ef, &vectors[idx], &payloads[idx], fetch_payload)
                                     .await?;
                             }
                             Ok(())

@@ -42,8 +42,8 @@ download-dataset dataset="gist-960-euclidean.hdf5":
 generate-payloads input="gist-960-euclidean.hdf5": (download-dataset input)
     cargo run --bin generate-payloads -- --vectors "./resources/{{input}}"
 
-prepare-provider provider input="gist-960-euclidean.hdf5":
-    cargo run --bin prepare-provider -- --provider "{{provider}}" --vectors "./resources/{{input}}"
+prepare provider input="gist-960-euclidean.hdf5":
+    cargo run --bin prepare -- --provider "{{provider}}" --vectors "./resources/{{input}}"
 
 #############################################
 ## Volume Handling                         ##
@@ -172,4 +172,4 @@ bench provider:
     cargo bench --bench "{{provider}}"
 
 ingest provider:
-    cargo run --bin prepare-provider -- --vectors ./resources/gist-960-euclidean.hdf5 --provider "{{provider}}"
+    cargo run --bin prepare -- --vectors ./resources/gist-960-euclidean.hdf5 --provider "{{provider}}"

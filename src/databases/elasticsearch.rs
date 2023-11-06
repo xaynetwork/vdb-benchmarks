@@ -197,6 +197,8 @@ impl QueryVectorDatabase for Elasticsearch {
 
     async fn query(
         &self,
+        k: usize,
+        ef: usize,
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
@@ -205,7 +207,7 @@ impl QueryVectorDatabase for Elasticsearch {
             .json_request(
                 Method::POST,
                 ["_search"],
-                &ElasticQuery::new(vector, payload, return_payload),
+                &ElasticQuery::new(k, ef, vector, payload, return_payload),
             )
             .await?
             .json()
@@ -231,13 +233,20 @@ struct ElasticQuery<'a> {
 }
 
 impl<'a> ElasticQuery<'a> {
-    fn new(vector: &'a [f32], payload: &QueryPayload, return_payload: bool) -> Self {
+    fn new(
+        k: usize,
+        ef: usize,
+        vector: &'a [f32],
+        payload: &QueryPayload,
+        return_payload: bool,
+    ) -> Self {
         Self {
             knn: KnnQuery {
                 field: "embedding",
                 query_vector: vector,
-                k: 100,
-                num_candidates: 100,
+                k,
+                //WARNING: This isn't exactly the same as `ef`, but the closest thing to `ef` we get.
+                num_candidates: ef,
                 filter: BoolQuery::default()
                     .with_date_range_filter("publication_date", &payload.publication_date)
                     .with_label_filter("authors", &payload.authors)

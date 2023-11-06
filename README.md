@@ -65,7 +65,7 @@ You can use `just service {up|down} {qdrant|vespa|elasticsearch}` to start/stop 
 
 ## Service Preparation
 
-Use `just prepare-provider {qdrant|vespa|elasticsearch}` to setup indices and ingest documents.
+Use `just prepare {qdrant|vespa|elasticsearch}` to setup indices and ingest documents.
 
 ## Benchmark
 
