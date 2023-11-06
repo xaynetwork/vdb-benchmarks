@@ -118,7 +118,16 @@ impl PrepareVectorDatabase for Qdrant {
                         payload_m: None,
                     }),
                     wal_config: None,
-                    optimizers_config: None,
+                    optimizers_config: Some(OptimizersConfigDiff {
+                        deleted_threshold: None,
+                        vacuum_min_vector_number: None,
+                        default_segment_number: None,
+                        max_segment_size: None,
+                        memmap_threshold: Some(6_000_000),
+                        indexing_threshold: None,
+                        flush_interval_sec: None,
+                        max_optimization_threads: None,
+                    }),
                     shard_number: Some(3),
                     replication_factor: Some(1),
                     on_disk_payload: None,
@@ -135,14 +144,14 @@ impl PrepareVectorDatabase for Qdrant {
                     }),
                     write_consistency_factor: None,
                     init_from_collection: None,
-                    quantization_config: Some(QuantizationConfig {
-                        quantization: Some(Quantization::Scalar(ScalarQuantization {
-                            r#type: QuantizationType::Int8 as _,
-                            quantile: Some(1.0),
-                            // use default from other configs
-                            always_ram: None,
-                        })),
-                    }),
+                    quantization_config: None, /*Some(QuantizationConfig {
+                                                   quantization: Some(Quantization::Scalar(ScalarQuantization {
+                                                       r#type: QuantizationType::Int8 as _,
+                                                       quantile: Some(1.0),
+                                                       // use default from other configs
+                                                       always_ram: None,
+                                                   })),
+                                               }),*/
                 })
                 .await?;
 
