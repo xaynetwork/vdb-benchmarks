@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+  <hosts>
+    <!-- 1 config server node -->
+    <host name="config-1">
+        <alias>config1</alias>
+    </host>
+
+    <!-- 3 Vespa nodes -->
+    <host name="node-1">
+        <alias>node1</alias>
+    </host>
+    <host name="node-2">
+        <alias>node2</alias>
+    </host>
+    <host name="node-3">
+        <alias>node3</alias>
+    </host>
+</hosts>

@@ -1,0 +1,74 @@
+# Setup for running a 3 node qdrant cluster
+#
+# Ports:
+#   on port `64{node-i}{last-node-port-digit}` e.g. 6414 => node-1 and grpc (as grpc port internally is 6334)
+services:
+  node-1:
+    image: qdrant/qdrant
+    command: ./qdrant --uri 'http://node-1:6335' --config-path ./config/config.yaml
+    volumes:
+      - "storage-1:/qdrant/storage:rw"
+      - "./config:/qdrant/config:ro"
+    ports:
+      - "6413:6333"
+      - "6414:6334"
+    healthcheck: &def_health
+      test: curl -f http://localhost:6333/healthz || exit 1
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy: &def_deploy
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+        reservations:
+          cpus: "4"
+          memory: 8G
+      restart_policy:
+        condition: on-failure
+        delay: 0s
+        max_attempts: 3
+        window: 120s
+
+  node-2:
+    image: qdrant/qdrant
+    # join cluster of node-1
+    command: ./qdrant --bootstrap 'http://node-1:6335' --config-path ./config/config.yaml
+    volumes:
+      - "storage-2:/qdrant/storage:rw"
+      - "./config:/qdrant/config:ro"
+    ports:
+      - "6423:6333"
+      - "6424:6334"
+    depends_on: &def_await_leader
+      node-1:
+        condition: service_started
+    healthcheck: *def_health
+    deploy: *def_deploy
+
+  node-3:
+    image: qdrant/qdrant
+    # join cluster of node-1
+    command: ./qdrant --bootstrap 'http://node-1:6335' --config-path ./config/config.yaml
+    volumes:
+      - "storage-3:/qdrant/storage:rw"
+      - "./config:/qdrant/config:ro"
+    ports:
+      - "6433:6333"
+      - "6434:6334"
+    depends_on: *def_await_leader
+    healthcheck: *def_health
+    deploy: *def_deploy
+
+volumes:
+  storage-1:
+    name: qdrant-storage-1
+    external: true
+  storage-2:
+    name: qdrant-storage-2
+    external: true
+  storage-3:
+    name: qdrant-storage-3
+    external: true

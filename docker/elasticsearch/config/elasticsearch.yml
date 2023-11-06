@@ -1,0 +1,36 @@
+# shared base config, per-node settings are done through env variables
+
+cluster:
+  name: elasticsearch-cluster
+  # This setting is a horror story!!!! (and for now we won't handle it properly)
+  # - it must only be there on initial boot
+  # - so after initial bootstrapping once (before starting ingestion) you should remove it from the settings
+  # - it shouldn't be there when restarting nodes
+  #   - this applies to restart on failure
+  #   - this applies to restart after running `docker compose down`
+  # This setting is a total shit show when running any automated deployments and even worse with docker compose.
+  initial_master_nodes:
+    - node-1
+    - node-2
+    - node-3
+
+node:
+  roles:
+    - master
+    - data
+
+network:
+  host: 0.0.0.0
+
+http:
+  port: 9200
+
+transport:
+  port: 9300
+
+discovery:
+  type: multi-node
+
+xpack:
+  security:
+    enabled: false

@@ -1,0 +1,9 @@
+{
+    "cSpell.words": [
+        "healthcheck"
+    ],
+    "rust-analyzer.cargo.extraEnv": {
+        "RUSTFLAGS": "-C link-args=-Wl,-rpath,/home/user/projects/vdb-benchmarks/.tools/libhdf5/lib",
+        "HDF5_DIR": "/home/user/projects/vdb-benchmarks/.tools/libhdf5",
+    }
+}

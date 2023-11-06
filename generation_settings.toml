@@ -1,0 +1,39 @@
+[rng]
+seed = 0xbafaad6f89daafa
+
+[publication_date]
+min = "2020-01-01T01:01:01Z"
+max = "2023-01-01T01:01:01Z"
+sample_distribution = { type="uniform" }
+
+[publication_date.filters]
+has_upper_bound = 0.4
+has_lower_bound = 0.8
+# Note: the implementation isn't not exactly normal distributed, but close enough to it
+upper_bound_sample_distribution = { type="normal", mean="37.5%", std="12.5%" }
+lower_bound_sample_distribution = { type="normal", mean="62.5%", std="12.5%" }
+# min range of possible valid values in seconds, this applies to `both`
+# as much as it does apply to min..upper_bound and lower_bound..max
+min_range_len = 86400
+
+[tags]
+population = 1000
+zipfs_law_pmf = { s= 1 }
+property_count_distribution = [0.1, 0.3, 0.25, 0.15, 0.1, 0.05, 0.05]
+
+[tags.filters]
+include_count_distribution = [0.3, 0.35, 0.25, 0.1]
+exclude_count_distribution = [0.55, 0.275, 0.175]
+
+[authors]
+population = 20
+zipfs_law_pmf = { s= 1.25 }
+property_count_distribution = [0, 0.6, 0.3, 0.1]
+
+[authors.filters]
+include_count_distribution = [0.5, 0.26, 0.14]
+exclude_count_distribution = [0.60, 0.40]
+
+
+
+

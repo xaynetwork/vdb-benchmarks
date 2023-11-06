@@ -1,0 +1,78 @@
+# based on: https://github.com/vespa-engine/sample-apps/blob/master/simple-semantic-search/schemas/doc.sd
+
+# schemas mainly bundle _one_ document with a number of rank-profile and other things like struct definitions
+# it's convenient to give it the same name as the document so that you don't have to think about which places
+# want the schema name and which the document name (most)
+schema content {
+
+    document content {
+
+        field embedding type tensor<float>(x[960]) {
+            # summary == allow returning the vector
+            # index == allows using it as main search/ranking feature
+            # attribute == allows filtering by it
+            # hnsw search needs index+attribute
+            indexing: summary | attribute | index
+            attribute {
+                # or e.g. dotproduct and many other
+                # be aware that angular is the angle use cos(closeness(.....)) to get a cosin metric
+                distance-metric: euclidean
+            }
+            index {
+                hnsw {
+                    # == M
+                    max-links-per-node: 16
+                    # == ef_construction
+                    neighbors-to-explore-at-insert: 100
+                    # the ef parameter can be set as attribute of nearestNeighbor:
+                    # e.g. `{hnsw.exploreAdditionalHits:180, targetHits:20}nearestNeighbor(embedding, query_embedding)`
+                    # would be equivalent to ef=200,k=20 in term more familiar with HNSW in papers
+                }
+            }
+        }
+
+        field tags type array<string> {
+            # like ES each field of an array is indexed separately
+            indexing: summary | attribute
+            match {
+                # needed so that string comparison using `contains` is a exact match
+                # instead of checking tokenized/stemed word overlap
+                exact
+            }
+        }
+
+        field authors type array<string> {
+            indexing: summary | attribute
+            match {
+                exact
+            }
+        }
+
+        # time in unix epoch UTC
+        field publication_date type long {
+            # there is no date time, so we use UTC+0 unix epoch timestamps in seconds
+            indexing: summary | attribute
+        }
+
+        field link type string {
+            # note that there is a URL type which handles the trickiness of searching/filtering
+            # for urls better, but we don't need that here
+            indexing: summary
+        }
+    }
+
+    rank-profile ann inherits default {
+        inputs {
+            # nearestNeighbor in queries needs one query input and that inputs tensor type needs to be defined here
+            query(query_embedding) tensor<float>(x[960])
+        }
+        first-phase {
+            # `field` here is a _constant string_ it basically says:
+            #  "from that single nearestNeighbor function in the search query take the vector and
+            #   compare it to the embedding field of this schemas document"
+            #  see https://docs.vespa.ai/en/reference/rank-features.html#closeness(dimension,name)
+            expression: closeness(field, embedding)
+        }
+    }
+
+}

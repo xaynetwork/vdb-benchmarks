@@ -1,0 +1,71 @@
+// Copyright 2023 Xayn AG
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, version 3.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+pub mod query_throughput;
+
+use std::fmt::{self, Display};
+
+use anyhow::Error;
+use async_trait::async_trait;
+
+use crate::distribution::QueryPayload;
+
+#[derive(Clone, Copy)]
+pub struct QueryParameters {
+    pub k: usize,
+    pub ef: usize,
+    pub fetch_payload: bool,
+    pub number_of_tasks: usize,
+    pub queries_per_task: usize,
+}
+
+impl Display for QueryParameters {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self {
+            k,
+            ef,
+            fetch_payload,
+            number_of_tasks,
+            queries_per_task,
+        } = self;
+        write!(
+            f,
+            "ef={ef},k={k},fpl={fetch_payload},#t={number_of_tasks},#q/t={queries_per_task}"
+        )
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct IngestionParameters {
+    pub m: usize,
+    pub ef_construct: usize,
+}
+
+impl Display for IngestionParameters {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self { m, ef_construct } = self;
+        write!(f, "M={m},efC={ef_construct}")
+    }
+}
+
+#[async_trait]
+pub trait QueryVectorDatabase: Send + Sync + 'static {
+    fn name(&self) -> &str;
+    async fn query(
+        &self,
+        vector: &[f32],
+        payload: &QueryPayload,
+        return_payload: bool,
+    ) -> Result<(), Error>;
+}

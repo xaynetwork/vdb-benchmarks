@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- based on https://github.com/vespa-engine/sample-apps/blob/master/examples/operations/multinode/services.xml -->
+<services version="1.0" xmlns:deploy="vespa" xmlns:preprocess="properties">
+    <admin version='2.0'>
+        <adminserver hostalias="node1" />
+        <configservers>
+            <configserver hostalias="node1" />
+            <configserver hostalias="node2" />
+            <configserver hostalias="node3" />
+        </configservers>
+        <cluster-controllers>
+            <cluster-controller hostalias="node1" />
+            <cluster-controller hostalias="node2" />
+            <cluster-controller hostalias="node3" />
+        </cluster-controllers>
+    </admin>
+
+    <container id="default" version="1.0">
+        <document-api/>
+        <search/>
+        <nodes>
+            <node hostalias="node1" />
+            <node hostalias="node2" />
+            <node hostalias="node3" />
+        </nodes>
+    </container>
+
+    <content id="content" version="1.0">
+        <min-redundancy>3</min-redundancy>
+        <engine>
+            <proton>
+                <searchable-copies>3</searchable-copies>
+            </proton>
+        </engine>
+        <documents>
+            <document type="content" mode="index" />
+        </documents>
+        <nodes>
+            <node hostalias="node1" distribution-key="0" />
+            <node hostalias="node2" distribution-key="1" />
+            <node hostalias="node3" distribution-key="2" />
+        </nodes>
+    </content>
+
+</services>

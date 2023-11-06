@@ -1,0 +1,118 @@
+# Setup for running a 3 storage node vespa cluster
+# based on: https://github.com/vespa-engine/sample-apps/blob/master/examples/operations/multinode/README.md
+services:
+  node-1:
+    image: vespaengine/vespa
+    command: configserver,services
+    hostname: node-1
+    environment: &def_env
+      VESPA_CONFIGSERVERS: node-1,node-2,node-3
+    volumes:
+      # see https://docs.vespa.ai/en/operations-selfhosted/docker-containers.html
+      - storage-1:/opt/vespa/var
+      - log-1:/opt/vespa/logs
+    ports:
+      - "8080:8080"
+      - "19071:19071"
+      - "19050:19050"
+      - "19092:19092"
+    healthcheck: &def_health
+      test: curl -sf --head http://localhost:19071/ApplicationStatus
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy: &def_deploy
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+        reservations:
+          cpus: "4"
+          memory: 8G
+      restart_policy:
+        condition: on-failure
+        delay: 0s
+        max_attempts: 3
+        window: 120s
+
+  node-2:
+    image: vespaengine/vespa
+    command: configserver,services
+    hostname: node-2
+    environment: *def_env
+    volumes:
+      - storage-2:/opt/vespa/var
+      - log-2:/opt/vespa/logs
+    ports:
+      - "8081:8080"
+      - "19072:19071"
+      - "19051:19050"
+      - "19093:19092"
+    depends_on: &def_await_leader
+      node-1:
+        condition: service_started
+    healthcheck: *def_health
+    deploy: *def_deploy
+
+  node-3:
+    image: vespaengine/vespa
+    command: configserver,services
+    hostname: node-3
+    environment: *def_env
+    volumes:
+      - storage-3:/opt/vespa/var
+      - log-3:/opt/vespa/logs
+    ports:
+      - "8082:8080"
+      - "19073:19071"
+      - "19052:19050"
+      - "19094:19092"
+    depends_on: *def_await_leader
+    healthcheck: *def_health
+    deploy: *def_deploy
+
+  deploy-vespa:
+    # image which pushes
+    build:
+      context: .
+      dockerfile_inline: |
+        # WARNING: This is bad at auto-rebuilding, delete image: vespa-deploy-vespa
+        FROM debian:bookworm-20230502-slim
+        RUN set -eux; \
+            apt-get update; \
+            apt-get install -y --no-install-recommends \
+                ca-certificates curl zip\
+                ; \
+            update-ca-certificates
+        WORKDIR /app
+        COPY ./ ./
+        CMD [ "./deploy.sh" ]
+    depends_on:
+      # Warning: We only wait for started not ready so we have to wait for ready in deploy.sh
+      node-1:
+        condition: service_started
+      node-2:
+        condition: service_started
+      node-3:
+        condition: service_started
+
+volumes:
+  storage-1:
+    name: vespa-storage-1
+    external: true
+  storage-2:
+    name: vespa-storage-2
+    external: true
+  storage-3:
+    name: vespa-storage-3
+    external: true
+  log-1:
+    name: vespa-log-1
+    external: true
+  log-2:
+    name: vespa-log-2
+    external: true
+  log-3:
+    name: vespa-log-3
+    external: true
