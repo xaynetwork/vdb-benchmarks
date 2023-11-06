@@ -129,8 +129,9 @@ fn yql_build_query(
 
     Ok(json!({
         "yql": query,
-        "ranking": "ann",
+        "ranking.profile": "ann",
         "input.query(query_embedding)": vector,
+        "hits": 100,
     }))
 }
 
