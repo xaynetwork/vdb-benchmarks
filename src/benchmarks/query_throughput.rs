@@ -108,7 +108,10 @@ pub fn benchmark(
         },
     );
 
-    for number_of_tasks in [5, 10, 100] {
+    // with given resource limits we have to be careful to not
+    // go too high as it will timeout (it's non stop 5/10/20 requests
+    // not 5/10/20 hy\pothetical users)
+    for number_of_tasks in [5, 10, 20] {
         bench(
             &mut group,
             rt,
@@ -116,7 +119,7 @@ pub fn benchmark(
             ingestion_parameters,
             QueryParameters {
                 k: 10,
-                fetch_payload: true,
+                fetch_payload: false,
                 ef: 100,
                 number_of_tasks,
                 queries_per_task: 1,

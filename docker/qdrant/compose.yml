@@ -12,12 +12,13 @@ services:
     ports:
       - "6413:6333"
       - "6414:6334"
-    healthcheck: &def_health
-      test: curl -f http://localhost:6333/healthz || exit 1
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    ## qdrant image has neither curl nor wget
+    # healthcheck: &def_health
+    #   test: curl -f http://localhost:6333/healthz || exit 1
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
     deploy: &def_deploy
       resources:
         limits:
@@ -45,7 +46,7 @@ services:
     depends_on: &def_await_leader
       node-1:
         condition: service_started
-    healthcheck: *def_health
+    # healthcheck: *def_health
     deploy: *def_deploy
 
   node-3:
@@ -59,7 +60,7 @@ services:
       - "6433:6333"
       - "6434:6334"
     depends_on: *def_await_leader
-    healthcheck: *def_health
+    # healthcheck: *def_health
     deploy: *def_deploy
 
 volumes:

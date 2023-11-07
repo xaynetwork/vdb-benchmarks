@@ -166,6 +166,11 @@ fn yql_build_query(
         "ranking.profile": "ann",
         "input.query(query_embedding)": vector,
         "hits": k,
+        // The default timeout is 0.5s, furthermore vespa will kill queries which seem doomed to timeout
+        // early one, but we error and stop the benchmark once we hit a single error and with 100q being no
+        // stop thrown at it in parallel (but over the same http2 client) and given resource limits some timeouts
+        // are doomed to happen sooner or later. So we set them to the max value of 60s.
+        "timeout": "60s",
     }))
 }
 

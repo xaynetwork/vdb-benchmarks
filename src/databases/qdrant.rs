@@ -20,13 +20,14 @@ use chrono::{DateTime, Utc};
 use qdrant_client::{
     prelude::QdrantClient,
     qdrant::{
-        condition::ConditionOneOf, point_id::PointIdOptions, quantization_config::Quantization,
-        r#match::MatchValue, read_consistency, value::Kind, vectors::VectorsOptions,
-        vectors_config, with_payload_selector, CollectionStatus, Condition, CreateCollection,
-        Distance, FieldCondition, Filter, HnswConfigDiff, ListValue, Match, OptimizersConfigDiff,
-        PointId, PointStruct, QuantizationConfig, QuantizationType, Range, ReadConsistency,
-        ReadConsistencyType, RepeatedStrings, ScalarQuantization, SearchParams, SearchPoints,
-        Value, Vector, VectorParams, Vectors, VectorsConfig, WithPayloadSelector,
+        condition::ConditionOneOf, payload_index_params::IndexParams, point_id::PointIdOptions,
+        quantization_config::Quantization, r#match::MatchValue, read_consistency, value::Kind,
+        vectors::VectorsOptions, vectors_config, with_payload_selector, CollectionStatus,
+        Condition, CreateCollection, Distance, FieldCondition, FieldType, Filter, HnswConfigDiff,
+        ListValue, Match, OptimizersConfigDiff, PayloadIndexParams, PointId, PointStruct,
+        QuantizationConfig, QuantizationType, Range, ReadConsistency, ReadConsistencyType,
+        RepeatedStrings, ScalarQuantization, SearchParams, SearchPoints, Value, Vector,
+        VectorParams, Vectors, VectorsConfig, WithPayloadSelector,
     },
 };
 use tokio::time::sleep;
@@ -141,6 +142,24 @@ impl PrepareVectorDatabase for Qdrant {
                     }),
                     ..CreateCollection::default()
                 })
+                .await?;
+
+            self.client
+                .create_field_index(
+                    &self.collection,
+                    "publication_date",
+                    FieldType::Integer,
+                    None,
+                    None,
+                )
+                .await?;
+
+            self.client
+                .create_field_index(&self.collection, "authors", FieldType::Keyword, None, None)
+                .await?;
+
+            self.client
+                .create_field_index(&self.collection, "tags", FieldType::Keyword, None, None)
                 .await?;
 
             true
