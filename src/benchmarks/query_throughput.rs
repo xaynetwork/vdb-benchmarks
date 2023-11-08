@@ -14,7 +14,7 @@
 
 use std::sync::Arc;
 
-use anyhow::Error;
+use anyhow::{Context, Error};
 use criterion::{measurement::Measurement, BenchmarkGroup, BenchmarkId, Criterion, Throughput};
 use rand::{rngs::StdRng, thread_rng, Rng, SeedableRng};
 use rand_distr::Uniform;
@@ -49,14 +49,15 @@ pub fn benchmark(
 ) -> Result<(), Error> {
     paths.check_files_exists()?;
 
-    let cpus = parse_env("DOCKER_LIMIT_CPUS", 4)?;
-    let mem_limit = parse_env("DOCKER_LIMIT_MEM", 8)?;
+    let cpus = parse_env("DOCKER_LIMIT_CPUS", 4).context("parse DOCKER_LIMIT_CPUS")?;
+    let mem_limit = parse_env("DOCKER_LIMIT_MEM", 8).context("parse DOCKER_LIMIT_MEM")?;
 
     let writer = &writer.sub_writer("query_throughput")?;
     writer.write_file("path.json", paths)?;
 
-    let payloads: Vec<QueryPayload> = load_bincode(&paths.query_payload_file)?;
-    let vectors = load_vectors(&paths.vectors_file, "test")?;
+    let payloads: Vec<QueryPayload> =
+        load_bincode(&paths.query_payload_file).context("loading bincode payloads")?;
+    let vectors = load_vectors(&paths.vectors_file, "test").context("loading vector data")?;
     let nr_elements = vectors.len();
     assert!(payloads.len() == nr_elements);
 

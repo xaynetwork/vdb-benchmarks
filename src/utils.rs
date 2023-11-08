@@ -14,7 +14,7 @@
 
 use std::{env::VarError, future::Future, str::FromStr};
 
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Context, Error};
 use reqwest::Response;
 
 pub(crate) async fn body_to_error(response: Response) -> Error {

@@ -180,8 +180,8 @@ stats place:
     cargo run --bin stats -- "{{place}}/additional_data/"
 
 rm-reports:
-    rm -r ./reports
-    rm -r ./target/criterion/
+    [[ -e ./reports ]] && rm -r ./reports
+    [[ -e ./target/criterion/ ]] && rm -r ./target/criterion/
 
 cp-reports-for-commit:
     #!/usr/bin/env -S bash -eu -o pipefail
