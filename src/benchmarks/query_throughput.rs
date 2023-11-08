@@ -94,6 +94,24 @@ pub fn benchmark(
         },
     )?;
 
+    bench(
+        writer,
+        &mut group,
+        rt,
+        &inputs,
+        ingestion_parameters,
+        QueryParameters {
+            k: 10,
+            ef: 200,
+            number_of_tasks: 5,
+            queries_per_task: 10,
+            fetch_payload: false,
+            use_filters: false,
+            cpus,
+            mem_limit,
+        },
+    )?;
+
     for k in [10, 50, 100] {
         bench(
             writer,
