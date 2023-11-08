@@ -15,3 +15,7 @@
 pub mod elasticsearch;
 pub mod qdrant;
 pub mod vespa;
+
+pub trait DatabaseName {
+    fn name(&self) -> &str;
+}

@@ -32,6 +32,8 @@ use crate::{
     utils::await_and_check_request,
 };
 
+use super::DatabaseName;
+
 pub struct Vespa {
     client: Client,
     base_url: Url,
@@ -77,12 +79,14 @@ impl Vespa {
     }
 }
 
-#[async_trait]
-impl QueryVectorDatabase for Vespa {
+impl DatabaseName for Vespa {
     fn name(&self) -> &str {
         "vespa"
     }
+}
 
+#[async_trait]
+impl QueryVectorDatabase for Vespa {
     async fn query(
         &self,
         k: usize,

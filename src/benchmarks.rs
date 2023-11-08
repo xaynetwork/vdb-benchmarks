@@ -20,7 +20,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::distribution::QueryPayload;
+use crate::{databases::DatabaseName, distribution::QueryPayload};
 
 #[derive(Clone, Copy)]
 pub struct QueryParameters {
@@ -65,8 +65,7 @@ impl Display for IngestionParameters {
 }
 
 #[async_trait]
-pub trait QueryVectorDatabase: Send + Sync + 'static {
-    fn name(&self) -> &str;
+pub trait QueryVectorDatabase: DatabaseName + Send + Sync + 'static {
     async fn query(
         &self,
         k: usize,

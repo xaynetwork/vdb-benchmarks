@@ -192,7 +192,7 @@ where
     let bench_id = format!("{iparams},{qparams}");
     let writer = writer.sub_writer(&bench_id)?;
     let writer2 = writer.clone();
-    let docker_stats = DockerStatScanner::start(rt, inputs.database.name())?;
+    let docker_stats = DockerStatScanner::start(rt.handle(), inputs.database.name())?;
 
     // We send the recall data out of the benchmark and write it in a separate task.
 

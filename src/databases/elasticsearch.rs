@@ -32,6 +32,8 @@ use crate::{
     utils::{await_and_check_request, body_to_error},
 };
 
+use super::DatabaseName;
+
 pub struct Elasticsearch {
     client: Client,
     base_url: Url,
@@ -69,6 +71,12 @@ impl Elasticsearch {
             .send();
 
         await_and_check_request(fut).await
+    }
+}
+
+impl DatabaseName for Elasticsearch {
+    fn name(&self) -> &str {
+        "elasticsearch"
     }
 }
 
@@ -198,10 +206,6 @@ impl PrepareVectorDatabase for Elasticsearch {
 
 #[async_trait]
 impl QueryVectorDatabase for Elasticsearch {
-    fn name(&self) -> &str {
-        "elasticsearch"
-    }
-
     async fn query(
         &self,
         k: usize,

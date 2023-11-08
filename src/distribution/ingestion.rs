@@ -17,10 +17,13 @@ use std::time::{Duration, Instant};
 use anyhow::Error;
 use async_trait::async_trait;
 use serde_json::json;
+use tokio::runtime::Handle;
 use uuid::Uuid;
 
 use crate::{
+    databases::DatabaseName,
     distribution::{ids::index_to_fake_uuid, DocumentPayload},
+    docker::DockerStatScanner,
     math::WelfordOnlineAlgorithm,
     resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
 };
@@ -32,7 +35,7 @@ pub struct IngestionInfo<'a> {
 }
 
 #[async_trait(?Send)]
-pub trait PrepareVectorDatabase {
+pub trait PrepareVectorDatabase: DatabaseName {
     async fn initialize(&self) -> Result<bool, Error>;
     async fn prepare_mass_ingestion(&self) -> Result<(), Error>;
     async fn finish_mass_ingestion(&self, target_max_time: Duration) -> Result<(), Error>;
@@ -84,6 +87,7 @@ pub async fn ingest_database(
         }),
     )?;
 
+    let docker_stats = DockerStatScanner::start(&Handle::current(), database.name())?;
     let mut times = WelfordOnlineAlgorithm::new();
 
     let start = Instant::now();
@@ -134,6 +138,8 @@ pub async fn ingest_database(
         }),
     )?;
 
+    let stats = docker_stats.stop().await?;
+    writer.write_file("docker_stats.json", &stats)?;
     Ok(())
 }
 

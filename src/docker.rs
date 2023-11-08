@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::Command,
-    runtime::Runtime,
+    runtime::Handle,
     select,
     sync::oneshot::{self, Sender},
     task::JoinHandle,
@@ -65,6 +65,7 @@ impl Stat {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct StatPoint {
     memory: f64,
     cpu: f64,
@@ -75,7 +76,7 @@ struct StatPoint {
 struct Stop;
 
 impl DockerStatScanner {
-    pub fn start(rt: &Runtime, provider: &str) -> Result<DockerStatScanner, Error> {
+    pub fn start(rt: &Handle, provider: &str) -> Result<DockerStatScanner, Error> {
         let line_parser = LineParser::new(provider)?;
         let (sender, mut receiver) = oneshot::channel();
         let handle = rt.spawn(async move {
@@ -178,7 +179,7 @@ fn parse_mem_current_max(input: &str, divide_by: f64) -> Result<f64, Error> {
         .ok_or_else(|| anyhow!("unexpected docker stats format: {input}"))?;
     let (s, base, pow_multiplier) = s.strip_suffix('i').map_or((s, 10, 3), |s| (s, 2, 10));
     let (s, power_level) = s
-        .strip_suffix('K')
+        .strip_suffix(['K', 'k'])
         .map(|s| (s, 1))
         .or_else(|| s.strip_suffix('M').map(|s| (s, 2)))
         .or_else(|| s.strip_suffix('G').map(|s| (s, 3)))
@@ -187,7 +188,7 @@ fn parse_mem_current_max(input: &str, divide_by: f64) -> Result<f64, Error> {
     if power_level == 0u32 && base == 2u64 {
         bail!("iB is not a valid unit: {input}");
     }
-    let number: f64 = s.parse()?;
+    let number: f64 = s.parse().with_context(|| format!("invalid number: {s}"))?;
 
     Ok(number * base.pow(power_level * pow_multiplier) as f64 / divide_by)
 }
@@ -227,6 +228,21 @@ mod tests {
         assert_eq!(
             parse_mem_current_max("4250000000B / 20GiB", GB).unwrap(),
             4.25
+        );
+    }
+
+    #[test]
+    fn test_parse_parsing_docker_stats_line() {
+        let parser = LineParser::new("qdrant").unwrap();
+        let stat_point = parser.parse("\u{1b}[2J\u{1b}[H{\"BlockIO\":\"24.6kB / 17.4GB\",\"CPUPerc\":\"7.46%\",\"Container\":\"67dec669eced\",\"ID\":\"67dec669eced\",\"MemPerc\":\"53.88%\",\"MemUsage\":\"4.311GiB / 8GiB\",\"Name\":\"qdrant_node-3_1\",\"NetIO\":\"2.88GB / 8.64MB\",\"PIDs\":\"38\"}").unwrap();
+        assert_eq!(
+            stat_point,
+            Some(StatPoint {
+                memory: 4.311,
+                cpu: 7.46,
+                block_io: 2.46e-05,
+                net_io: 2.88,
+            })
         );
     }
 }

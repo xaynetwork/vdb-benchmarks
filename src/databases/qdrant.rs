@@ -39,6 +39,8 @@ use crate::{
     },
 };
 
+use super::DatabaseName;
+
 pub struct Qdrant {
     client: QdrantClient,
     collection: String,
@@ -69,6 +71,12 @@ impl Qdrant {
             .status;
         //TODO recently it was green but still high cpu load??
         Ok(status == CollectionStatus::Green as i32)
+    }
+}
+
+impl DatabaseName for Qdrant {
+    fn name(&self) -> &str {
+        "qdrant"
     }
 }
 
@@ -248,10 +256,6 @@ impl PrepareVectorDatabase for Qdrant {
 
 #[async_trait]
 impl QueryVectorDatabase for Qdrant {
-    fn name(&self) -> &str {
-        "qdrant"
-    }
-
     async fn query(
         &self,
         k: usize,
