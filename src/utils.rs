@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::future::Future;
+use std::{env::VarError, future::Future, str::FromStr};
 
 use anyhow::{anyhow, Error};
 use reqwest::Response;
@@ -35,5 +35,17 @@ pub(crate) async fn await_and_check_request(
         Ok(response)
     } else {
         Err(body_to_error(response).await)
+    }
+}
+
+pub fn parse_env<T>(env: &str, default: T) -> Result<T, Error>
+where
+    T: FromStr,
+    Error: From<T::Err>,
+{
+    match std::env::var(env) {
+        Ok(var) => Ok(var.parse()?),
+        Err(VarError::NotPresent) => Ok(default),
+        Err(err) => Err(err.into()),
     }
 }

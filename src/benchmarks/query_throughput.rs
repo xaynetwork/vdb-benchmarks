@@ -27,6 +27,7 @@ use crate::{
     distribution::{ids::fake_uuid_to_index, QueryPayload},
     docker::DockerStatScanner,
     resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
+    utils::parse_env,
 };
 
 use super::QueryVectorDatabase;
@@ -47,6 +48,9 @@ pub fn benchmark(
     c: &mut Criterion,
 ) -> Result<(), Error> {
     paths.check_files_exists()?;
+
+    let cpus = parse_env("DOCKER_LIMIT_CPUS", 4)?;
+    let mem_limit = parse_env("DOCKER_LIMIT_MEM", 8)?;
 
     let writer = &writer.sub_writer("query_throughput")?;
     writer.write_file("path.json", paths)?;
@@ -84,6 +88,8 @@ pub fn benchmark(
             queries_per_task: 10,
             fetch_payload: false,
             use_filters: false,
+            cpus,
+            mem_in_gib: mem_limit,
         },
     )?;
 
@@ -101,6 +107,8 @@ pub fn benchmark(
                 number_of_tasks: 5,
                 queries_per_task: 10,
                 use_filters: true,
+                cpus,
+                mem_in_gib: mem_limit,
             },
         )?;
     }
@@ -118,6 +126,8 @@ pub fn benchmark(
             number_of_tasks: 5,
             queries_per_task: 10,
             use_filters: true,
+            cpus,
+            mem_in_gib: mem_limit,
         },
     )?;
 
@@ -134,6 +144,8 @@ pub fn benchmark(
             number_of_tasks: 5,
             queries_per_task: 10,
             use_filters: true,
+            cpus,
+            mem_in_gib: mem_limit,
         },
     )?;
 
@@ -154,6 +166,8 @@ pub fn benchmark(
                 number_of_tasks,
                 queries_per_task: 1,
                 use_filters: true,
+                cpus,
+                mem_in_gib: mem_limit,
             },
         )?;
     }
@@ -181,6 +195,8 @@ where
         number_of_tasks,
         queries_per_task,
         use_filters,
+        cpus: _,
+        mem_in_gib: _,
     } = qparams;
     //FIXME We currently can only have recall data for the non filter case
     //      for now, but running a perfect KNN with filters would be nice.

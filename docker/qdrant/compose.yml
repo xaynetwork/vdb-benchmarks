@@ -22,11 +22,11 @@ services:
     deploy: &def_deploy
       resources:
         limits:
-          cpus: "4"
-          memory: 8G
+          cpus: "${DOCKER_LIMIT_CPUS:-4}"
+          memory: "${DOCKER_LIMIT_MEM:-8}G"
         reservations:
-          cpus: "4"
-          memory: 8G
+          cpus: "${DOCKER_LIMIT_CPUS:-4}"
+          memory: "${DOCKER_LIMIT_MEM:-8}G"
       restart_policy:
         condition: on-failure
         delay: 0s
