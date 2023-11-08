@@ -70,3 +70,41 @@ Use `just prepare {qdrant|vespa|elasticsearch}` to setup indices and ingest docu
 ## Benchmark
 
 You can use `just bench {qdrant|vespa|elasticsearch}` to runt he benchmarks.
+
+## Report Handling
+
+Reports will be generated in two places:
+
+- `./reports/additional_data`
+- `./target/criterion`
+
+Continuous benchmark runs will will add to the reports, not override them.
+
+You can use `just rm-reports` to delete this reports.
+
+You can use `just cp-reports-for-commit` to copy them into `./committed_reports` creating
+a structure like `./committed_reports/YYYY-MM-DD_HH:MM:SS.GITSHORTHASH/{additional_data,criterion}`.
+
+For benchmarks run without filters we collect data for calculating recall and precision. Do
+do so run `just recall <path>` which will recursive search the given `<path>` for files named
+`recall_data.jsonl` and generate a `recall.json` alongside it as well as print the calculated
+recall and precision. Normally you run it on `just recall ./reports` or `just recall ./committed_reports/..../additional_data`
+
+Each bench has a id which looks like e.g. `qdrant/query_throughput/16:100_8.00:8.00-10:100pF-5:10` (this compact
+form is necessary as there is a character limit for the id).
+
+This id has following structure:
+
+- `<id> := <provider> "/" <bench_group> "/" <ingestion-params> "_" <query-params>`
+- `<ingestion-params> := <HNSW.M> ":" <HNSW.EF_CONSTRUCT>`
+- `<query-params> := <limits> "-" <query> "-" <parallelism>`
+- `<limits> := <cpu-limit> ":" <mem-limit>`
+- `<query> := <k> ":" <ef/num_candidates> ":" <fetch-payload?true=P,false=p> ":" <use-filters?true=F,false=f>`
+- `<parallelism> := <number-of-tasks> ":" <number-of-queries-per-task>`
+
+Or all in one:
+
+- `<provider> "/" <bench_group> "/" <HNSW.M> ":" <HNSW.EF_CONSTRUCT> "_" <cpu-limit> ":" <mem-limit> "-" <k> ":" <ef/num_candidates> ":" <fetch-payload?true=P,false=p> ":" <use-filters?true=F,false=f> "-" <number-of-tasks> ":" <number-of-queries-per-task>`
+
+Be aware that the `num_candidates` parameter of elastic search is similar to `ef` but not quite them same, through we treat
+them as the same as we have little other choice. Through if you notice some noticeable differences in recall/precision for benches with small `ef` value there is a good chance this is the reason for it.
