@@ -14,7 +14,6 @@
 
 use anyhow::Error;
 use criterion::Criterion;
-use std::time::Duration;
 use vdb_benchmarks::{
     benchmarks::query_throughput,
     databases::vespa::Vespa,
@@ -22,10 +21,7 @@ use vdb_benchmarks::{
 };
 
 fn main() -> Result<(), Error> {
-    let mut c = Criterion::default()
-        .configure_from_args()
-        .measurement_time(Duration::from_secs(300))
-        .sample_size(10);
+    let mut c = Criterion::default().configure_from_args().sample_size(10);
     let writer = ResourceWriter::new("./reports/additional_data", ["vespa"])?;
     let paths = ResolvedPaths::resolve("./resources/gist-960-euclidean.hdf5");
     let database = Vespa::new(0)?;

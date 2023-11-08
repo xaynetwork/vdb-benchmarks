@@ -14,7 +14,6 @@
 
 use anyhow::Error;
 use criterion::Criterion;
-use std::time::Duration;
 use vdb_benchmarks::{
     benchmarks::query_throughput,
     databases::qdrant::Qdrant,
@@ -26,10 +25,7 @@ use vdb_benchmarks::{
 ///     to not create issues with RAM and multiple containers we have one
 ///     service for each combination of dataset+M+ef_construct (using prefixes)
 fn main() -> Result<(), Error> {
-    let mut c = Criterion::default()
-        .configure_from_args()
-        .measurement_time(Duration::from_secs(300))
-        .sample_size(10);
+    let mut c = Criterion::default().configure_from_args().sample_size(10);
     let writer = ResourceWriter::new("./reports/additional_data", ["qdrant"])?;
     let paths = ResolvedPaths::resolve("./resources/gist-960-euclidean.hdf5");
     let database = Qdrant::new(1)?;
