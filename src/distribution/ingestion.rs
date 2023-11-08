@@ -14,13 +14,14 @@
 
 use std::time::{Duration, Instant};
 
-use anyhow::Error;
+use anyhow::{Context, Error};
 use async_trait::async_trait;
 use serde_json::json;
 use tokio::runtime::Handle;
 use uuid::Uuid;
 
 use crate::{
+    consts::{DOCKER_LIMIT_CPUS, DOCKER_LIMIT_MEMORY},
     databases::DatabaseName,
     distribution::{ids::index_to_fake_uuid, DocumentPayload},
     docker::DockerStatScanner,
@@ -84,6 +85,8 @@ pub async fn ingest_database(
             "documents": nr_documents,
             "vector_size":  vectors.get(0).map_or(0, Vec::len),
             "ingestion_batch_size": BATCH_SIZE,
+            "limit_cpus": *DOCKER_LIMIT_CPUS,
+            "limit_memory": *DOCKER_LIMIT_MEMORY,
         }),
     )?;
 

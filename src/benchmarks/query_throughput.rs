@@ -24,10 +24,10 @@ use uuid::Uuid;
 
 use crate::{
     benchmarks::{IngestionParameters, QueryParameters},
+    consts::{DOCKER_LIMIT_CPUS, DOCKER_LIMIT_MEMORY},
     distribution::{ids::fake_uuid_to_index, QueryPayload},
     docker::DockerStatScanner,
     resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
-    utils::parse_env,
 };
 
 use super::QueryVectorDatabase;
@@ -49,8 +49,8 @@ pub fn benchmark(
 ) -> Result<(), Error> {
     paths.check_files_exists()?;
 
-    let cpus = parse_env("DOCKER_LIMIT_CPUS", 4).context("parse DOCKER_LIMIT_CPUS")?;
-    let mem_limit = parse_env("DOCKER_LIMIT_MEM", 8).context("parse DOCKER_LIMIT_MEM")?;
+    let cpus = DOCKER_LIMIT_CPUS;
+    let mem_limit = DOCKER_LIMIT_MEMORY;
 
     let writer = &writer.sub_writer("query_throughput")?;
     writer.write_file("path.json", paths)?;

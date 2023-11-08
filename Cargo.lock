@@ -2150,6 +2150,7 @@ dependencies = [
  "derive_more",
  "hdf5",
  "ndarray",
+ "once_cell",
  "qdrant-client",
  "rand",
  "rand_distr",

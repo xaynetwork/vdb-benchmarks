@@ -17,9 +17,9 @@ use criterion::Criterion;
 use std::time::Duration;
 use vdb_benchmarks::{
     benchmarks::query_throughput,
+    consts::BENCH_MEASUREMENT_TIME,
     databases::qdrant::Qdrant,
     resources::{ResolvedPaths, ResourceWriter},
-    utils::parse_env,
 };
 
 /// TODO change interface to run tests from a toml file
@@ -27,10 +27,9 @@ use vdb_benchmarks::{
 ///     to not create issues with RAM and multiple containers we have one
 ///     service for each combination of dataset+M+ef_construct (using prefixes)
 fn main() -> Result<(), Error> {
-    let time_in_seconds = parse_env("BENCH_MEASUREMENT_TIME", 30)?;
     let mut c = Criterion::default()
         .configure_from_args()
-        .measurement_time(Duration::from_secs(time_in_seconds))
+        .measurement_time(Duration::from_secs(*BENCH_MEASUREMENT_TIME))
         .sample_size(10);
     let writer = ResourceWriter::new("./reports/additional_data", ["qdrant"])?;
     let paths = ResolvedPaths::resolve("./resources/gist-960-euclidean.hdf5");

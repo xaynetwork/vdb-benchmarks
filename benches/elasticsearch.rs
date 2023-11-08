@@ -18,16 +18,15 @@ use anyhow::Error;
 use criterion::Criterion;
 use vdb_benchmarks::{
     benchmarks::query_throughput,
+    consts::BENCH_MEASUREMENT_TIME,
     databases::elasticsearch::Elasticsearch,
     resources::{ResolvedPaths, ResourceWriter},
-    utils::parse_env,
 };
 
 fn main() -> Result<(), Error> {
-    let time_in_seconds = parse_env("BENCH_MEASUREMENT_TIME", 30)?;
     let mut c = Criterion::default()
         .configure_from_args()
-        .measurement_time(Duration::from_secs(time_in_seconds))
+        .measurement_time(Duration::from_secs(*BENCH_MEASUREMENT_TIME))
         .sample_size(10);
     let writer = ResourceWriter::new("./reports/additional_data", ["elasticsearch"])?;
     let paths = ResolvedPaths::resolve("./resources/gist-960-euclidean.hdf5");
