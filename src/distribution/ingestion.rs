@@ -16,11 +16,12 @@ use std::time::{Duration, Instant};
 
 use anyhow::Error;
 use async_trait::async_trait;
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::{
     distribution::{ids::index_to_fake_uuid, DocumentPayload},
-    resources::{load_bincode, load_vectors, ResolvedPaths},
+    resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
 };
 
 pub struct IngestionInfo<'a> {
@@ -56,9 +57,13 @@ pub fn load_ingestion_data(
 
 const BATCH_SIZE: usize = 100;
 pub async fn ingest_database(
+    writer: &ResourceWriter,
     paths: &ResolvedPaths,
     database: &impl PrepareVectorDatabase,
 ) -> Result<(), Error> {
+    let writer = writer.sub_writer("ingestion")?;
+    writer.write_file("paths.json", paths)?;
+
     eprintln!("initialize database");
     let needs_ingestion = database.initialize().await?;
     if !needs_ingestion {
@@ -66,19 +71,33 @@ pub async fn ingest_database(
     }
 
     let (vectors, payloads) = load_ingestion_data(paths)?;
-    let nr_document = vectors.len();
+    let nr_documents = vectors.len();
+
+    writer.write_file(
+        "source.json",
+        &json!({
+            "dataset": paths.dataset_name()?,
+            "documents": nr_documents,
+            "vector_size":  vectors.get(0).map_or(0, Vec::len),
+            "ingestion_batch_size": BATCH_SIZE,
+        }),
+    )?;
+
+    let mut times = Vec::new();
 
     let start = Instant::now();
     let _deferred = CallOnDrop::new(move || {
         let duration = Instant::now().duration_since(start).as_secs_f32();
         eprintln!("time spend ingesting: {duration:.2}s");
     });
+
     eprintln!("prepare ingestion");
     database.prepare_mass_ingestion().await?;
     let mut vectors = vectors.iter().zip(payloads.iter()).enumerate().peekable();
     eprintln!("ingestion started");
     let mut nr_ingested_entries = 0;
     while vectors.peek().is_some() {
+        let batch_start = Instant::now();
         database
             .ingest_batch(
                 vectors
@@ -92,20 +111,35 @@ pub async fn ingest_database(
             )
             .await?;
         nr_ingested_entries += BATCH_SIZE;
+        let duration = Instant::now().duration_since(batch_start).as_secs_f32();
+        times.push(round_two_digits(duration));
         eprintln!(
             "progress: {:.2}%",
-            nr_ingested_entries as f32 / nr_document as f32 * 100.
+            nr_ingested_entries as f32 / nr_documents as f32 * 100.
         );
     }
     eprintln!("finish uploading, waiting for index to be ready");
     database
         .finish_mass_ingestion(Duration::from_secs(900))
         .await?;
-    let duration = Instant::now().duration_since(start);
-    eprintln!("full ingestion duration: {:.4}s", duration.as_secs_f64());
+    let duration = Instant::now().duration_since(start).as_secs_f32();
+    eprintln!("full ingestion duration: {:.4}s", duration);
+
+    writer.write_file(
+        "times.json",
+        &json!({
+            "total": round_two_digits(duration),
+            "per_batch": times,
+        }),
+    )?;
+
     Ok(())
 }
 
+fn round_two_digits(input: f32) -> f32 {
+    //WARNING: not numeric perfect
+    (input * 100.).round() / 100.
+}
 struct CallOnDrop<F>
 where
     F: FnOnce(),

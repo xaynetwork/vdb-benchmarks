@@ -29,6 +29,7 @@ pub struct QueryParameters {
     pub fetch_payload: bool,
     pub number_of_tasks: usize,
     pub queries_per_task: usize,
+    pub use_filters: bool,
 }
 
 impl Display for QueryParameters {
@@ -39,10 +40,11 @@ impl Display for QueryParameters {
             fetch_payload,
             number_of_tasks,
             queries_per_task,
+            use_filters,
         } = self;
         write!(
             f,
-            "ef={ef},k={k},fpl={fetch_payload},#t={number_of_tasks},#q/t={queries_per_task}"
+            "ef={ef},k={k},payload={fetch_payload},filter={use_filters},nr_t={number_of_tasks},nr_q_per_t={queries_per_task}"
         )
     }
 }
@@ -70,5 +72,6 @@ pub trait QueryVectorDatabase: Send + Sync + 'static {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
+        use_filters: bool,
     ) -> Result<Vec<Uuid>, Error>;
 }

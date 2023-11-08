@@ -18,12 +18,14 @@ use anyhow::Error;
 use criterion::{measurement::Measurement, BenchmarkGroup, BenchmarkId, Criterion, Throughput};
 use rand::{rngs::StdRng, thread_rng, Rng, SeedableRng};
 use rand_distr::Uniform;
-use tokio::{runtime::Runtime, task::JoinSet};
+use serde_json::json;
+use tokio::{runtime::Runtime, sync::mpsc, task::JoinSet};
+use uuid::Uuid;
 
 use crate::{
     benchmarks::{IngestionParameters, QueryParameters},
-    distribution::QueryPayload,
-    resources::{load_bincode, load_vectors, ResolvedPaths},
+    distribution::{ids::fake_uuid_to_index, QueryPayload},
+    resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
 };
 
 use super::QueryVectorDatabase;
@@ -38,11 +40,15 @@ where
 }
 
 pub fn benchmark(
+    writer: &ResourceWriter,
     paths: &ResolvedPaths,
     database: impl QueryVectorDatabase,
     c: &mut Criterion,
 ) -> Result<(), Error> {
     paths.check_files_exists()?;
+
+    let writer = &writer.sub_writer("query_throughput")?;
+    writer.write_file("path.json", paths)?;
 
     let payloads: Vec<QueryPayload> = load_bincode(&paths.query_payload_file)?;
     let vectors = load_vectors(&paths.vectors_file, "test")?;
@@ -64,8 +70,25 @@ pub fn benchmark(
     let rt = &Runtime::new()?;
     let mut group = c.benchmark_group(inputs.database.name());
 
+    bench(
+        writer,
+        &mut group,
+        rt,
+        &inputs,
+        ingestion_parameters,
+        QueryParameters {
+            k: 10,
+            ef: 10,
+            number_of_tasks: 5,
+            queries_per_task: 10,
+            fetch_payload: false,
+            use_filters: false,
+        },
+    )?;
+
     for k in [10, 50, 100] {
         bench(
+            writer,
             &mut group,
             rt,
             &inputs,
@@ -76,11 +99,13 @@ pub fn benchmark(
                 ef: k,
                 number_of_tasks: 5,
                 queries_per_task: 10,
+                use_filters: true,
             },
-        );
+        )?;
     }
 
     bench(
+        writer,
         &mut group,
         rt,
         &inputs,
@@ -91,10 +116,12 @@ pub fn benchmark(
             ef: 100,
             number_of_tasks: 5,
             queries_per_task: 10,
+            use_filters: true,
         },
-    );
+    )?;
 
     bench(
+        writer,
         &mut group,
         rt,
         &inputs,
@@ -105,14 +132,16 @@ pub fn benchmark(
             ef: 100,
             number_of_tasks: 5,
             queries_per_task: 10,
+            use_filters: true,
         },
-    );
+    )?;
 
     // with given resource limits we have to be careful to not
     // go too high as it will timeout (it's non stop 5/10/20 requests
     // not 5/10/20 hy\pothetical users)
     for number_of_tasks in [5, 10, 20] {
         bench(
+            writer,
             &mut group,
             rt,
             &inputs,
@@ -123,20 +152,23 @@ pub fn benchmark(
                 ef: 100,
                 number_of_tasks,
                 queries_per_task: 1,
+                use_filters: true,
             },
-        );
+        )?;
     }
 
     Ok(())
 }
 
 fn bench<M, DB>(
+    writer: &ResourceWriter,
     group: &mut BenchmarkGroup<'_, M>,
     rt: &Runtime,
     inputs: &Arc<Inputs<DB>>,
     iparams: IngestionParameters,
     qparams: QueryParameters,
-) where
+) -> Result<(), Error>
+where
     DB: QueryVectorDatabase,
     M: Measurement + 'static,
     Arc<Inputs<DB>>: Send,
@@ -147,21 +179,65 @@ fn bench<M, DB>(
         fetch_payload,
         number_of_tasks,
         queries_per_task,
+        use_filters,
     } = qparams;
+    //FIXME We currently can only have recall data for the non filter case
+    //      for now, but running a perfect KNN with filters would be nice.
+    let enable_recall_stats = !use_filters;
     assert!(k <= ef);
     assert!(queries_per_task > 0);
     assert!(number_of_tasks > 0);
+
+    let bench_id = format!("{iparams},{qparams}");
+    let writer = writer.sub_writer(&bench_id)?;
+
+    // We send the recall data out of the benchmark and write it in a separate task.
+
+    let (recall_sender, mut recall_receiver) = mpsc::unbounded_channel();
+    let writer_task = rt.spawn(async move {
+        if !enable_recall_stats {
+            recall_receiver.close();
+            return Ok(());
+        }
+
+        let recall_file = "recall_data.jsonl";
+        writer.write_file(
+            recall_file,
+            &json!({
+                "expected_hits": k,
+            }),
+        )?;
+        let mut recall_data = Vec::new();
+        while let Some(group) = recall_receiver.recv().await {
+            match group {
+                Group::Add { query_id, vectors } => recall_data.push((
+                    query_id,
+                    vectors
+                        .into_iter()
+                        .map(fake_uuid_to_index)
+                        .collect::<Vec<_>>(),
+                )),
+                Group::Write => {
+                    writer.append_line_to_file(recall_file, &recall_data)?;
+                    recall_data.truncate(0);
+                }
+            }
+        }
+        Result::<_, Error>::Ok(())
+    });
+
     group
         .throughput(Throughput::Elements(
             (queries_per_task * number_of_tasks) as _,
         ))
         .bench_with_input(
-            BenchmarkId::new("query_throughput", format!("{iparams},{qparams}")),
+            BenchmarkId::new("query_throughput", bench_id),
             inputs,
-            |b, inputs| {
+            move |b, inputs| {
                 b.to_async(rt).iter(|| async {
                     let mut tasks = JoinSet::<Result<(), Error>>::new();
                     for _ in 0..number_of_tasks {
+                        let recall_sender = recall_sender.clone();
                         let inputs = inputs.clone();
                         tasks.spawn(async move {
                             let Inputs {
@@ -175,9 +251,23 @@ fn bench<M, DB>(
                                 .sample_iter(Uniform::new(0, inputs.vectors.len()))
                                 .take(queries_per_task)
                             {
-                                database
-                                    .query(k, ef, &vectors[idx], &payloads[idx], fetch_payload)
+                                let vectors = database
+                                    .query(
+                                        k,
+                                        ef,
+                                        &vectors[idx],
+                                        &payloads[idx],
+                                        fetch_payload,
+                                        use_filters,
+                                    )
                                     .await?;
+
+                                if enable_recall_stats {
+                                    recall_sender.send(Group::Add {
+                                        query_id: idx,
+                                        vectors,
+                                    })?;
+                                }
                             }
                             Ok(())
                         });
@@ -186,7 +276,19 @@ fn bench<M, DB>(
                     while let Some(result) = tasks.join_next().await {
                         result.unwrap().unwrap();
                     }
+
+                    if enable_recall_stats {
+                        recall_sender.send(Group::Write).unwrap();
+                    }
                 })
             },
         );
+
+    rt.block_on(writer_task)??;
+    Ok(())
+}
+
+enum Group {
+    Add { query_id: usize, vectors: Vec<Uuid> },
+    Write,
 }

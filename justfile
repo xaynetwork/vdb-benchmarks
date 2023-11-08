@@ -175,3 +175,6 @@ cycle provider:
     {{just_executable()}} service down "{{provider}}"
     {{just_executable()}} volume recreate "{{provider}}"
     {{just_executable()}} service up "{{provider}}"
+
+stats:
+    cargo run --bin stats

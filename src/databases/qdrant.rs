@@ -20,14 +20,12 @@ use chrono::{DateTime, Utc};
 use qdrant_client::{
     prelude::QdrantClient,
     qdrant::{
-        condition::ConditionOneOf, payload_index_params::IndexParams, point_id::PointIdOptions,
-        quantization_config::Quantization, r#match::MatchValue, read_consistency, value::Kind,
-        vectors::VectorsOptions, vectors_config, with_payload_selector, CollectionStatus,
-        Condition, CreateCollection, Distance, FieldCondition, FieldType, Filter, HnswConfigDiff,
-        ListValue, Match, OptimizersConfigDiff, PayloadIndexParams, PointId, PointStruct,
-        QuantizationConfig, QuantizationType, Range, ReadConsistency, ReadConsistencyType,
-        RepeatedStrings, ScalarQuantization, SearchParams, SearchPoints, Value, Vector,
-        VectorParams, Vectors, VectorsConfig, WithPayloadSelector,
+        condition::ConditionOneOf, point_id::PointIdOptions, r#match::MatchValue, read_consistency,
+        value::Kind, vectors::VectorsOptions, vectors_config, with_payload_selector,
+        CollectionStatus, Condition, CreateCollection, Distance, FieldCondition, FieldType, Filter,
+        HnswConfigDiff, ListValue, Match, OptimizersConfigDiff, PointId, PointStruct, Range,
+        ReadConsistency, ReadConsistencyType, RepeatedStrings, SearchParams, SearchPoints, Value,
+        Vector, VectorParams, Vectors, VectorsConfig, WithPayloadSelector,
     },
 };
 use tokio::time::sleep;
@@ -134,12 +132,12 @@ impl PrepareVectorDatabase for Qdrant {
                             ..VectorParams::default()
                         })),
                     }),
-                    quantization_config: Some(QuantizationConfig {
+                    /*quantization_config: Some(QuantizationConfig {
                         quantization: Some(Quantization::Scalar(ScalarQuantization {
                             r#type: QuantizationType::Int8 as _,
                             ..ScalarQuantization::default()
                         })),
-                    }),
+                    }),*/
                     ..CreateCollection::default()
                 })
                 .await?;
@@ -261,13 +259,14 @@ impl QueryVectorDatabase for Qdrant {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
+        use_filter: bool,
     ) -> Result<Vec<Uuid>, Error> {
         let result = self
             .client
             .search_points(&SearchPoints {
                 collection_name: self.collection.clone(),
                 vector: vector.into(),
-                filter: qdrant_filter(payload),
+                filter: use_filter.then(|| qdrant_filter(payload)).flatten(),
                 limit: k as _,
                 params: Some(SearchParams {
                     hnsw_ef: Some(ef as _),

@@ -13,15 +13,21 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::{
-    fs,
+    cmp,
+    fs::{self, File},
     io::{BufReader, BufWriter, Write},
     path::{Path, PathBuf},
+    process::Command,
+    str,
 };
 
 use anyhow::{anyhow, bail, Error};
 use bincode::Options;
+use chrono::Utc;
 use serde::{de::DeserializeOwned, Serialize};
+use serde_json::json;
 
+#[derive(Serialize)]
 pub struct ResolvedPaths {
     pub vectors_file: PathBuf,
     pub document_payload_file: PathBuf,
@@ -39,6 +45,14 @@ impl ResolvedPaths {
             document_payload_file,
             query_payload_file,
         }
+    }
+
+    pub fn dataset_name(&self) -> Result<&str, Error> {
+        Ok(self
+            .vectors_file
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .ok_or_else(|| anyhow!("invalid vector file name"))?)
     }
 
     pub fn check_files_exists(&self) -> Result<(), Error> {
@@ -118,4 +132,106 @@ pub fn load_vectors(path: &Path, dataset: &str) -> Result<Vec<Vec<f32>>, Error> 
         .collect::<Result<Vec<_>, _>>()?;
     file.close()?;
     Ok(vectors)
+}
+
+pub struct ResourceWriter {
+    out_dir: PathBuf,
+}
+
+impl ResourceWriter {
+    pub fn new(
+        out_dir: impl Into<PathBuf>,
+        scope: impl IntoIterator<Item = impl AsRef<str>>,
+    ) -> Result<Self, Error> {
+        let mut out_dir = out_dir.into();
+        for segment in scope {
+            out_dir.push(segment.as_ref());
+        }
+        let out_dir = create_next_dir(out_dir)?;
+        let this = Self { out_dir };
+
+        this.write_file(
+            "open.json",
+            &json!({
+                "git": get_git_hash()?,
+                "date": Utc::now().to_rfc3339(),
+            }),
+        )?;
+
+        Ok(this)
+    }
+
+    pub fn sub_writer(&self, scope: impl AsRef<str>) -> Result<ResourceWriter, Error> {
+        let out_dir = self.out_dir.join(scope.as_ref());
+        fs::create_dir_all(&out_dir)?;
+        Ok(Self { out_dir })
+    }
+
+    pub fn write_close_msg(self) -> Result<(), Error> {
+        self.write_file(
+            "close.json",
+            &json!({
+                "date": Utc::now().to_rfc3339(),
+            }),
+        )?;
+        Ok(())
+    }
+
+    pub fn write_file(&self, name: impl AsRef<str>, data: &impl Serialize) -> Result<(), Error> {
+        let out = File::options()
+            .write(true)
+            .create_new(true)
+            .open(self.out_dir.join(name.as_ref()))?;
+        let mut out = BufWriter::new(out);
+        serde_json::to_writer(&mut out, data)?;
+        out.write_all(&[b'\n'])?;
+        out.flush()?;
+        Ok(())
+    }
+
+    pub fn append_line_to_file(
+        &self,
+        name: impl AsRef<str>,
+        data: &impl Serialize,
+    ) -> Result<(), Error> {
+        // Hint: A proper impl. might cache the fd we do not bother.
+        // Hint: While this uses append it's not concurrent write safe.
+        let out = File::options()
+            .append(true)
+            .open(self.out_dir.join(name.as_ref()))?;
+        let mut out = BufWriter::new(out);
+        serde_json::to_writer(&mut out, data)?;
+        out.write_all(&[b'\n'])?;
+        out.flush()?;
+        Ok(())
+    }
+}
+
+fn get_git_hash() -> Result<String, Error> {
+    let out = Command::new("git").args(["rev-parse", "HEAD"]).output()?;
+    if !out.status.success() {
+        bail!("failed to run git rev-parse HEAD");
+    }
+
+    Ok(str::from_utf8(&out.stdout)?.trim().into())
+}
+
+fn create_next_dir(dir: impl AsRef<Path>) -> Result<PathBuf, Error> {
+    let dir = dir.as_ref();
+    fs::create_dir_all(&dir)?;
+
+    let mut max: isize = -1;
+    for entry in fs::read_dir(dir)? {
+        let idx = entry?
+            .file_name()
+            .into_string()
+            .map_err(|_| anyhow!("non utf-8 file name"))?
+            .parse::<usize>()?
+            .try_into()?;
+        max = cmp::max(max, idx);
+    }
+
+    let out = dir.join(format!("{:0>4x}", max + 1));
+    fs::create_dir_all(&out)?;
+    Ok(out)
 }

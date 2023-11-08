@@ -209,12 +209,13 @@ impl QueryVectorDatabase for Elasticsearch {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
+        use_filters: bool,
     ) -> Result<Vec<Uuid>, Error> {
         let mut results = self
             .json_request(
                 Method::POST,
                 ["_search"],
-                &ElasticQuery::new(k, ef, vector, payload, return_payload),
+                &ElasticQuery::new(k, ef, vector, payload, return_payload, use_filters),
             )
             .await?
             .json::<SearchResult>()
@@ -260,6 +261,7 @@ impl<'a> ElasticQuery<'a> {
         vector: &'a [f32],
         payload: &QueryPayload,
         return_payload: bool,
+        use_filters: bool,
     ) -> Self {
         Self {
             knn: KnnQuery {
@@ -268,10 +270,15 @@ impl<'a> ElasticQuery<'a> {
                 k,
                 //WARNING: This isn't exactly the same as `ef`, but the closest thing to `ef` we get.
                 num_candidates: ef,
-                filter: BoolQuery::default()
-                    .with_date_range_filter("publication_date", &payload.publication_date)
-                    .with_label_filter("authors", &payload.authors)
-                    .with_label_filter("tags", &payload.tags),
+                filter: use_filters
+                    .then(|| {
+                        BoolQuery::default()
+                            .with_date_range_filter("publication_date", &payload.publication_date)
+                            .with_label_filter("authors", &payload.authors)
+                            .with_label_filter("tags", &payload.tags)
+                            .into_option()
+                    })
+                    .flatten(),
             },
             return_payload,
         }
@@ -284,12 +291,19 @@ struct KnnQuery<'a> {
     query_vector: &'a [f32],
     k: usize,
     num_candidates: usize,
-    filter: BoolQuery,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    filter: Option<BoolQuery>,
 }
 
 #[derive(Default, Deref, DerefMut, Serialize)]
 struct BoolQuery {
     bool: BoolQueryInner,
+}
+
+impl BoolQuery {
+    fn into_option(self) -> Option<Self> {
+        (!self.filter.is_empty() || !self.must_not.is_empty()).then(|| self)
+    }
 }
 
 #[derive(Default, Serialize)]

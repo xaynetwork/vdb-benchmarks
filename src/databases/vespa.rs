@@ -90,8 +90,9 @@ impl QueryVectorDatabase for Vespa {
         vector: &[f32],
         payload: &QueryPayload,
         return_payload: bool,
+        use_filter: bool,
     ) -> Result<Vec<Uuid>, Error> {
-        let query = yql_build_query(k, ef, vector, payload, return_payload)?;
+        let query = yql_build_query(k, ef, vector, payload, return_payload, use_filter)?;
         let root = self
             //Hint: The trailing "" is important the path has to be /search/ not /search
             .json_request(Method::POST, ["search", ""], &query)
@@ -152,14 +153,18 @@ fn yql_build_query(
     vector: &[f32],
     payload: &QueryPayload,
     return_payload: bool,
+    use_filter: bool,
 ) -> Result<Value, Error> {
     let selector = if return_payload { " * " } else { " id " };
     let explore_additional_hits = ef - k;
     let mut query =
         format!("select{selector}from content where {{hnsw.exploreAdditionalHits:{explore_additional_hits}, targetHits:{k}}}nearestNeighbor(embedding, query_embedding)");
-    yql_append_date_range(&mut query, "publication_date", &payload.publication_date)?;
-    yql_append_label_filter(&mut query, "authors", &payload.authors)?;
-    yql_append_label_filter(&mut query, "tags", &payload.tags)?;
+
+    if use_filter {
+        yql_append_date_range(&mut query, "publication_date", &payload.publication_date)?;
+        yql_append_label_filter(&mut query, "authors", &payload.authors)?;
+        yql_append_label_filter(&mut query, "tags", &payload.tags)?;
+    }
 
     Ok(json!({
         "yql": query,
@@ -320,6 +325,7 @@ mod tests {
                 },
             },
             true,
+            true,
         )
         .unwrap();
 
@@ -338,6 +344,7 @@ mod tests {
                 "input.query(query_embedding)": [2., 4., 6.],
                 "ranking.profile": "ann",
                 "hits": 10,
+                "timeout": "60s",
             })
         );
 
@@ -360,6 +367,7 @@ mod tests {
                 },
             },
             true,
+            true,
         )
         .unwrap();
 
@@ -376,6 +384,7 @@ mod tests {
                 "input.query(query_embedding)": [2., 4., 6.],
                 "ranking.profile": "ann",
                 "hits": 10,
+                "timeout": "60s",
             })
         );
 
@@ -388,6 +397,7 @@ mod tests {
                 authors: LabelFilter::default(),
                 tags: LabelFilter::default(),
             },
+            true,
             true,
         )
         .unwrap();
@@ -402,6 +412,7 @@ mod tests {
                 "input.query(query_embedding)": [2., 4., 6.],
                 "ranking.profile": "ann",
                 "hits": 15,
+                "timeout": "60s",
             })
         );
 
@@ -424,6 +435,7 @@ mod tests {
                 },
             },
             false,
+            true,
         )
         .unwrap();
 
@@ -438,6 +450,44 @@ mod tests {
                 "input.query(query_embedding)": [2., 4., 6.],
                 "ranking.profile": "ann",
                 "hits": 10,
+                "timeout": "60s",
+            })
+        );
+
+        let res = yql_build_query(
+            10,
+            20,
+            &[2., 4., 6.],
+            &QueryPayload {
+                publication_date: DateFilter {
+                    lower_bound: None,
+                    upper_bound: Some(Utc.with_ymd_and_hms(1970, 1, 1, 1, 1, 1).unwrap()),
+                },
+                authors: LabelFilter {
+                    include: Labels::default(),
+                    exclude: Labels::default(),
+                },
+                tags: LabelFilter {
+                    include: Labels::default(),
+                    exclude: Labels::default(),
+                },
+            },
+            false,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(
+            res,
+            json!({
+                "yql": concat!(
+                    "select id from content where",
+                    " {hnsw.exploreAdditionalHits:10, targetHits:10}nearestNeighbor(embedding, query_embedding)",
+                ),
+                "input.query(query_embedding)": [2., 4., 6.],
+                "ranking.profile": "ann",
+                "hits": 10,
+                "timeout": "60s",
             })
         );
     }
