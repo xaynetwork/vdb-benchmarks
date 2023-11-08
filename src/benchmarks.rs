@@ -51,7 +51,7 @@ impl Display for QueryParameters {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct IngestionParameters {
     pub m: usize,
     pub ef_construct: usize,
