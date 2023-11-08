@@ -205,7 +205,7 @@ where
     assert!(queries_per_task > 0);
     assert!(number_of_tasks > 0);
 
-    let bench_id = format!("{iparams},{qparams}");
+    let bench_id = format!("{iparams}|{qparams}");
     let writer = writer.sub_writer(&bench_id)?;
     let writer2 = writer.clone();
     let docker_stats = DockerStatScanner::start(rt.handle(), inputs.database.name())?;

@@ -50,7 +50,7 @@ impl Display for QueryParameters {
         let use_filters = if *use_filters { "F" } else { "f" };
         write!(
             f,
-            "[{cpus}-{mem_in_gib}][{k}-{ef}{fetch_payload}{use_filters}]-[{number_of_tasks}-{queries_per_task}]"
+            "{cpus}-{mem_in_gib}|{k}-{ef}{fetch_payload}{use_filters}|{number_of_tasks}-{queries_per_task}"
         )
     }
 }
