@@ -21,6 +21,7 @@ use uuid::Uuid;
 
 use crate::{
     distribution::{ids::index_to_fake_uuid, DocumentPayload},
+    math::WelfordOnlineAlgorithm,
     resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
 };
 
@@ -83,7 +84,7 @@ pub async fn ingest_database(
         }),
     )?;
 
-    let mut times = Vec::new();
+    let mut times = WelfordOnlineAlgorithm::new();
 
     let start = Instant::now();
     let _deferred = CallOnDrop::new(move || {
@@ -111,8 +112,8 @@ pub async fn ingest_database(
             )
             .await?;
         nr_ingested_entries += BATCH_SIZE;
-        let duration = Instant::now().duration_since(batch_start).as_secs_f32();
-        times.push(round_two_digits(duration));
+        let duration = Instant::now().duration_since(batch_start).as_secs_f64();
+        times.update(duration);
         eprintln!(
             "progress: {:.2}%",
             nr_ingested_entries as f32 / nr_documents as f32 * 100.
@@ -128,8 +129,8 @@ pub async fn ingest_database(
     writer.write_file(
         "times.json",
         &json!({
-            "total": round_two_digits(duration),
-            "per_batch": times,
+            "total": duration,
+            "dist": times,
         }),
     )?;
 
