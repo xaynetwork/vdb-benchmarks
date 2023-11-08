@@ -30,8 +30,8 @@ pub struct QueryParameters {
     pub number_of_tasks: usize,
     pub queries_per_task: usize,
     pub use_filters: bool,
-    pub cpus: usize,
-    pub mem_in_gib: usize,
+    pub cpus: f32,
+    pub mem_limit: f32,
 }
 
 impl Display for QueryParameters {
@@ -44,13 +44,13 @@ impl Display for QueryParameters {
             queries_per_task,
             use_filters,
             cpus,
-            mem_in_gib,
+            mem_limit,
         } = self;
         let fetch_payload = if *fetch_payload { "P" } else { "p" };
         let use_filters = if *use_filters { "F" } else { "f" };
         write!(
             f,
-            "{cpus}:{mem_in_gib}-{k}:{ef}{fetch_payload}{use_filters}-{number_of_tasks}:{queries_per_task}"
+            "{cpus:.2}:{mem_limit:.2}-{k}:{ef}{fetch_payload}{use_filters}-{number_of_tasks}:{queries_per_task}"
         )
     }
 }

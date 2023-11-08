@@ -14,7 +14,7 @@
 
 use std::time::{Duration, Instant};
 
-use anyhow::{Context, Error};
+use anyhow::Error;
 use async_trait::async_trait;
 use serde_json::json;
 use tokio::runtime::Handle;

@@ -16,7 +16,7 @@ default:
 #############################################
 
 check:
-    cargo check
+    cargo check --all
 fmt:
     cargo fmt
 build:

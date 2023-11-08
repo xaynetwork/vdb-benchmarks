@@ -306,7 +306,7 @@ struct BoolQuery {
 
 impl BoolQuery {
     fn into_option(self) -> Option<Self> {
-        (!self.filter.is_empty() || !self.must_not.is_empty()).then(|| self)
+        (!self.filter.is_empty() || !self.must_not.is_empty()).then_some(self)
     }
 }
 

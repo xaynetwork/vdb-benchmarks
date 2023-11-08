@@ -49,8 +49,8 @@ pub fn benchmark(
 ) -> Result<(), Error> {
     paths.check_files_exists()?;
 
-    let cpus = DOCKER_LIMIT_CPUS;
-    let mem_limit = DOCKER_LIMIT_MEMORY;
+    let cpus = *DOCKER_LIMIT_CPUS;
+    let mem_limit = *DOCKER_LIMIT_MEMORY;
 
     let writer = &writer.sub_writer("query_throughput")?;
     writer.write_file("path.json", paths)?;
@@ -90,7 +90,7 @@ pub fn benchmark(
             fetch_payload: false,
             use_filters: false,
             cpus,
-            mem_in_gib: mem_limit,
+            mem_limit,
         },
     )?;
 
@@ -109,7 +109,7 @@ pub fn benchmark(
                 queries_per_task: 10,
                 use_filters: true,
                 cpus,
-                mem_in_gib: mem_limit,
+                mem_limit,
             },
         )?;
     }
@@ -128,7 +128,7 @@ pub fn benchmark(
             queries_per_task: 10,
             use_filters: true,
             cpus,
-            mem_in_gib: mem_limit,
+            mem_limit,
         },
     )?;
 
@@ -146,7 +146,7 @@ pub fn benchmark(
             queries_per_task: 10,
             use_filters: true,
             cpus,
-            mem_in_gib: mem_limit,
+            mem_limit,
         },
     )?;
 
@@ -168,7 +168,7 @@ pub fn benchmark(
                 queries_per_task: 1,
                 use_filters: true,
                 cpus,
-                mem_in_gib: mem_limit,
+                mem_limit,
             },
         )?;
     }
@@ -197,7 +197,7 @@ where
         queries_per_task,
         use_filters,
         cpus: _,
-        mem_in_gib: _,
+        mem_limit: _,
     } = qparams;
     //FIXME We currently can only have recall data for the non filter case
     //      for now, but running a perfect KNN with filters would be nice.

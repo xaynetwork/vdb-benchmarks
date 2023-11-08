@@ -119,7 +119,7 @@ impl DockerStatScanner {
 
     pub async fn stop(self) -> Result<DockerStats, Error> {
         self.sender.send(Stop).ok();
-        Ok(self.handle.await??)
+        self.handle.await?
     }
 }
 
@@ -135,6 +135,8 @@ const GB: f64 = 1_000_000_000.;
 
 impl LineParser {
     fn new(name_prefix: impl Into<String>) -> Result<Self, Error> {
+        //false positive
+        #[allow(clippy::needless_raw_string_hashes)]
         Ok(Self {
             regex: Regex::new(r#"\u{1b}\[[0-9;]*[a-zA-Z]"#)?,
             name_prefix: name_prefix.into(),
@@ -175,7 +177,7 @@ fn parse_mem_current_max(input: &str, divide_by: f64) -> Result<f64, Error> {
         .ok_or_else(|| anyhow!("unexpected docker stats format: {input}"))?
         .trim();
     let s = s
-        .strip_suffix("B")
+        .strip_suffix('B')
         .ok_or_else(|| anyhow!("unexpected docker stats format: {input}"))?;
     let (s, base, pow_multiplier) = s.strip_suffix('i').map_or((s, 10, 3), |s| (s, 2, 10));
     let (s, power_level) = s

@@ -47,7 +47,7 @@ fn main() -> Result<(), anyhow::Error> {
             let data: Vec<(usize, HashSet<usize>)> = serde_json::from_str(line?.trim())?;
             for (idx, got_neighbors) in data {
                 let expected_neighbors = &neighbors[idx];
-                let true_positive = got_neighbors.intersection(&expected_neighbors).count() as f64;
+                let true_positive = got_neighbors.intersection(expected_neighbors).count() as f64;
                 precision.update(if true_positive == 0. {
                     0.
                 } else {

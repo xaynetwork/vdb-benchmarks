@@ -48,11 +48,10 @@ impl ResolvedPaths {
     }
 
     pub fn dataset_name(&self) -> Result<&str, Error> {
-        Ok(self
-            .vectors_file
+        self.vectors_file
             .file_stem()
             .and_then(|stem| stem.to_str())
-            .ok_or_else(|| anyhow!("invalid vector file name"))?)
+            .ok_or_else(|| anyhow!("invalid vector file name"))
     }
 
     pub fn check_files_exists(&self) -> Result<(), Error> {
@@ -219,7 +218,7 @@ fn get_git_hash() -> Result<String, Error> {
 
 fn create_next_dir(dir: impl AsRef<Path>) -> Result<PathBuf, Error> {
     let dir = dir.as_ref();
-    fs::create_dir_all(&dir)?;
+    fs::create_dir_all(dir)?;
 
     let mut max: isize = -1;
     for entry in fs::read_dir(dir)? {
