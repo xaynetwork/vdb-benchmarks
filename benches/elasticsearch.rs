@@ -12,6 +12,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::time::Duration;
+
 use anyhow::Error;
 use criterion::Criterion;
 use vdb_benchmarks::{
@@ -21,7 +23,10 @@ use vdb_benchmarks::{
 };
 
 fn main() -> Result<(), Error> {
-    let mut c = Criterion::default().configure_from_args().sample_size(10);
+    let mut c = Criterion::default()
+        .configure_from_args()
+        .measurement_time(Duration::from_secs(10))
+        .sample_size(10);
     let writer = ResourceWriter::new("./reports/additional_data", ["elasticsearch"])?;
     let paths = ResolvedPaths::resolve("./resources/gist-960-euclidean.hdf5");
     let database = Elasticsearch::new()?;
