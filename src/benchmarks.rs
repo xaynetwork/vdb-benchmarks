@@ -50,7 +50,7 @@ impl Display for QueryParameters {
         let use_filters = if *use_filters { "F" } else { "f" };
         write!(
             f,
-            "{cpus}-{mem_in_gib}_{k}-{ef}{fetch_payload}{use_filters}_{number_of_tasks}-{queries_per_task}"
+            "{cpus}:{mem_in_gib}-{k}:{ef}{fetch_payload}{use_filters}-{number_of_tasks}:{queries_per_task}"
         )
     }
 }
@@ -64,7 +64,7 @@ pub struct IngestionParameters {
 impl Display for IngestionParameters {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self { m, ef_construct } = self;
-        write!(f, "{m}-{ef_construct}")
+        write!(f, "{m}:{ef_construct}")
     }
 }
 
