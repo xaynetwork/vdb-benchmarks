@@ -1,0 +1,1 @@
+{"dataset":"gist-960-euclidean","documents":1000000,"ingestion_batch_size":100,"vector_size":960}
