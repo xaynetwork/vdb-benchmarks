@@ -137,10 +137,6 @@ pub async fn ingest_database(
     Ok(())
 }
 
-fn round_two_digits(input: f32) -> f32 {
-    //WARNING: not numeric perfect
-    (input * 100.).round() / 100.
-}
 struct CallOnDrop<F>
 where
     F: FnOnce(),
