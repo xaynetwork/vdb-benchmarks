@@ -27,7 +27,7 @@ use vdb_benchmarks::{
 ///     to not create issues with RAM and multiple containers we have one
 ///     service for each combination of dataset+M+ef_construct (using prefixes)
 fn main() -> Result<(), Error> {
-    let time_in_seconds = parse_env("BENCH_MEASUREMENT_TIME", 10)?;
+    let time_in_seconds = parse_env("BENCH_MEASUREMENT_TIME", 30)?;
     let mut c = Criterion::default()
         .configure_from_args()
         .measurement_time(Duration::from_secs(time_in_seconds))
