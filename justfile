@@ -178,3 +178,21 @@ cycle provider:
 
 stats place:
     cargo run --bin stats -- "{{place}}/additional_data/"
+
+rm-reports:
+    rm -r ./reports
+    rm -r ./target/criterion/
+
+cp-reports-for-commit:
+    #!/usr/bin/env -S bash -eu -o pipefail
+    if [[ ! -e ./reports || ! -e ./target/criterion ]]; then
+        echo "no reports exist" >&2
+        exit 1
+    fi
+    NAME="./comitted_reports/$(date '+%Y-%m-%d_%H:%M:%S').$(git rev-parse --short HEAD)"
+    if [[ -e "$NAME" ]]; then
+        echo "$NAME already exists" >&2
+        exit 1
+    fi
+    mv ./reports "${NAME}"
+    mv ./target/criterion "${NAME}/"
