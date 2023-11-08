@@ -4,4 +4,4 @@ pub mod distribution;
 pub mod docker;
 pub mod math;
 pub mod resources;
-mod utils;
+pub mod utils;
