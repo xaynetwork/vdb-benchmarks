@@ -176,5 +176,5 @@ cycle provider:
     {{just_executable()}} volume recreate "{{provider}}"
     {{just_executable()}} service up "{{provider}}"
 
-stats:
-    cargo run --bin stats
+stats place:
+    cargo run --bin stats -- "{{place}}/additional_data/"

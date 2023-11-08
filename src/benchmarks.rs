@@ -42,14 +42,16 @@ impl Display for QueryParameters {
             queries_per_task,
             use_filters,
         } = self;
+        let fetch_payload = if *fetch_payload { "P" } else { "p" };
+        let use_filters = if *use_filters { "F" } else { "f" };
         write!(
             f,
-            "ef={ef},k={k},payload={fetch_payload},filter={use_filters},nr_t={number_of_tasks},nr_q_per_t={queries_per_task}"
+            "{k}-{ef}{fetch_payload}{use_filters}-{number_of_tasks}-{queries_per_task}"
         )
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct IngestionParameters {
     pub m: usize,
     pub ef_construct: usize,
@@ -58,7 +60,7 @@ pub struct IngestionParameters {
 impl Display for IngestionParameters {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self { m, ef_construct } = self;
-        write!(f, "M={m},efC={ef_construct}")
+        write!(f, "{m}-{ef_construct}")
     }
 }
 

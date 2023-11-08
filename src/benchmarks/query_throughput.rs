@@ -25,6 +25,7 @@ use uuid::Uuid;
 use crate::{
     benchmarks::{IngestionParameters, QueryParameters},
     distribution::{ids::fake_uuid_to_index, QueryPayload},
+    docker::DockerStatScanner,
     resources::{load_bincode, load_vectors, ResolvedPaths, ResourceWriter},
 };
 
@@ -190,6 +191,8 @@ where
 
     let bench_id = format!("{iparams},{qparams}");
     let writer = writer.sub_writer(&bench_id)?;
+    let writer2 = writer.clone();
+    let docker_stats = DockerStatScanner::start(rt, inputs.database.name())?;
 
     // We send the recall data out of the benchmark and write it in a separate task.
 
@@ -284,6 +287,8 @@ where
             },
         );
 
+    let stats = rt.block_on(docker_stats.stop())?;
+    writer2.write_file("docker_stats.json", &stats)?;
     rt.block_on(writer_task)??;
     Ok(())
 }

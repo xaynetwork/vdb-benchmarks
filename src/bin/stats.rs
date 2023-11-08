@@ -2,20 +2,28 @@ use std::{
     collections::HashSet,
     fs::{self, File},
     io::{BufRead, BufReader, BufWriter, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use anyhow::{anyhow, Error};
+use clap::Parser;
 use serde::Deserialize;
 use serde_json::json;
 use vdb_benchmarks::math::WelfordOnlineAlgorithm;
 use walkdir::WalkDir;
 
+#[derive(Parser, Debug)]
+#[command(version)]
+struct Cli {
+    #[arg(index = 1)]
+    dir: PathBuf,
+}
 //TODO allow configuring dirs
 fn main() -> Result<(), anyhow::Error> {
+    let cli = Cli::parse();
     //TODO do not hardcode this
     let neighbors = load_expected_neighbors("./resources/gist-960-euclidean.hdf5")?;
-    for entry in WalkDir::new("./reports/additional_data") {
+    for entry in WalkDir::new(&cli.dir) {
         let entry = entry?;
         let recall_file = entry.path().with_file_name("recall.json");
         if entry.file_name() != "recall_data.jsonl" {

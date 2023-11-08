@@ -134,6 +134,7 @@ pub fn load_vectors(path: &Path, dataset: &str) -> Result<Vec<Vec<f32>>, Error> 
     Ok(vectors)
 }
 
+#[derive(Clone)]
 pub struct ResourceWriter {
     out_dir: PathBuf,
 }
