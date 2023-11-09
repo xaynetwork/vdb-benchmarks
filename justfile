@@ -210,6 +210,7 @@ clean-bench provider cpus mem:
     sleep 30 #elasticsearch healthcheck do not work properly
     {{just_executable()}} ingest "{{provider}}"
     {{just_executable()}} bench "{{provider}}"
+    {{just_executable()}} service down "{{provider}}"
 
 clean-bench-all: rm-reports
     {{just_executable()}} clean-bench qdrant 4 8
