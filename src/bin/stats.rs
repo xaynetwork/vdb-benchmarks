@@ -42,8 +42,8 @@ fn main() -> Result<(), anyhow::Error> {
                     if let Some(recall) =
                         retrieve_recall(&neighbors, bench_path).context("retrieve_recall")?
                     {
-                        println!("{run} recall    {:.4}", recall.recall.mean());
-                        println!("{run} precision {:.4}", recall.precision.mean())
+                        println!("{run} recall@10    {:.4}", recall.recall.mean());
+                        println!("{run} precision@10 {:.4}", recall.precision.mean())
                     }
                     if let Some(docker_stats) =
                         retrieve_docker_stats(bench_path).context("retrieve_docker_stats")?
