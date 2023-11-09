@@ -212,10 +212,14 @@ clean-bench provider cpus mem:
     {{just_executable()}} bench "{{provider}}"
     {{just_executable()}} service down "{{provider}}"
 
-clean-bench-all: rm-reports
+clean-bench-all:
+    {{just_executable()}} rm-reports
     {{just_executable()}} clean-bench qdrant 4 8
     {{just_executable()}} clean-bench qdrant 8 8
     {{just_executable()}} clean-bench vespa 4 8
     {{just_executable()}} clean-bench vespa 8 8
     {{just_executable()}} clean-bench elasticsearch 4 8
     {{just_executable()}} clean-bench elasticsearch 8 8
+    {{just_executable()}} recall "./reports"
+    {{just_executable()}} cp-reports-for-commit
+    git add ./comitted_reports/*
