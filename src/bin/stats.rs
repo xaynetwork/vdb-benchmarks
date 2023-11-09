@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     fs::{self, File},
     io::{BufRead, BufReader, BufWriter, Write},
     path::{Path, PathBuf},
@@ -33,12 +32,12 @@ fn main() -> Result<(), anyhow::Error> {
     }
 
     visit_sub_dirs(data_dir, |provider, provider_path| {
-        visit_sub_dirs(&provider_path, |run, run_path| {
-            visit_sub_dirs(&run_path, |bench_group, bench_group_path| {
+        visit_sub_dirs(provider_path, |run, run_path| {
+            visit_sub_dirs(run_path, |bench_group, bench_group_path| {
                 if bench_group == "ingestion" {
                     return Ok(());
                 }
-                visit_sub_dirs(&bench_group_path, |bench_id, bench_path| {
+                visit_sub_dirs(bench_group_path, |bench_id, bench_path| {
                     println!("{run} {provider}/{bench_group}/{bench_id}");
                     if let Some(recall) =
                         retrieve_recall(&neighbors, bench_path).context("retrieve_recall")?
@@ -84,7 +83,7 @@ fn retrieve_docker_stats(bench_path: &Path) -> Result<Option<DockerStats>, Error
 }
 
 fn retrieve_recall(
-    neighbors: &[HashSet<usize>],
+    neighbors: &[Vec<usize>],
     bench_path: &Path,
 ) -> Result<Option<RecallAndPrecision>, Error> {
     let recall_data_file = bench_path.join("recall_data.jsonl");
@@ -115,7 +114,7 @@ fn retrieve_recall(
 
 fn calculate_stats(
     source: impl BufRead,
-    neighbors: &[HashSet<usize>],
+    neighbors: &[Vec<usize>],
 ) -> Result<RecallAndPrecision, Error> {
     let mut lines = source.lines();
     let Header { expected_hits } = serde_json::from_str(
@@ -129,10 +128,14 @@ fn calculate_stats(
     let mut recall = WelfordOnlineAlgorithm::new();
 
     for line in lines {
-        let data: Vec<(usize, HashSet<usize>)> = serde_json::from_str(line?.trim())?;
+        let data: Vec<(usize, Vec<usize>)> = serde_json::from_str(line?.trim())?;
         for (idx, got_neighbors) in data {
-            let expected_neighbors = &neighbors[idx];
-            let true_positive = got_neighbors.intersection(expected_neighbors).count() as f64;
+            let expected_neighbors = &neighbors[idx][..10];
+            let true_positive = got_neighbors
+                .iter()
+                .take(10)
+                .filter(|got| expected_neighbors.contains(got))
+                .count() as f64;
             precision.update(if true_positive == 0. {
                 0.
             } else {
@@ -169,7 +172,7 @@ fn visit_sub_dirs(
     Ok(())
 }
 
-fn load_expected_neighbors(vectors: impl AsRef<Path>) -> Result<Vec<HashSet<usize>>, Error> {
+fn load_expected_neighbors(vectors: impl AsRef<Path>) -> Result<Vec<Vec<usize>>, Error> {
     let file = hdf5::File::open(vectors)?;
     let dataset = file.dataset("neighbors")?;
     let neighbors = (0..dataset.shape()[0])

@@ -220,6 +220,6 @@ clean-bench-all:
     {{just_executable()}} clean-bench vespa 8 8
     {{just_executable()}} clean-bench elasticsearch 4 8
     {{just_executable()}} clean-bench elasticsearch 8 8
-    {{just_executable()}} recall "./reports"
+    {{just_executable()}} stats "./reports"
     {{just_executable()}} cp-reports-for-commit
     git add ./comitted_reports/*
