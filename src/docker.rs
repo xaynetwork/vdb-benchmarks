@@ -33,12 +33,12 @@ pub struct DockerStatScanner {
     sender: Sender<Stop>,
 }
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct DockerStats {
-    memory: Stat,
-    cpu: Stat,
-    block_io: Stat,
-    net_io: Stat,
+    pub memory: Stat,
+    pub cpu: Stat,
+    pub block_io: Stat,
+    pub net_io: Stat,
 }
 
 impl DockerStats {
@@ -50,7 +50,7 @@ impl DockerStats {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Stat {
     max: f64,
     min: f64,
@@ -58,6 +58,18 @@ pub struct Stat {
 }
 
 impl Stat {
+    pub fn mean(&self) -> f64 {
+        self.dist.mean()
+    }
+
+    pub fn max(&self) -> f64 {
+        self.max
+    }
+
+    pub fn sample_std(&self) -> f64 {
+        self.dist.sample_variance().sqrt()
+    }
+
     fn update(&mut self, value: f64) {
         self.max = self.max.max(value);
         self.min = self.min.min(value);

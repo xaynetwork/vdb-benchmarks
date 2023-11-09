@@ -2162,7 +2162,6 @@ dependencies = [
  "toml",
  "url",
  "uuid",
- "walkdir",
 ]
 
 [[package]]

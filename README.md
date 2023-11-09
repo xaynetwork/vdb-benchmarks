@@ -75,7 +75,7 @@ You can use `just bench {qdrant|vespa|elasticsearch}` to runt he benchmarks.
 
 Reports will be generated in two places:
 
-- `./reports/additional_data`
+- `./reports/`
 - `./target/criterion`
 
 Continuous benchmark runs will will add to the reports, not override them.

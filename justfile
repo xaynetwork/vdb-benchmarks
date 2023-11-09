@@ -179,8 +179,8 @@ cycle provider:
     {{just_executable()}} volume recreate "{{provider}}"
     {{just_executable()}} service up "{{provider}}"
 
-recall place:
-    cargo run --bin recall -- "{{place}}/additional_data/"
+stats reports_dir:
+    cargo run --bin stats -- "{{reports_dir}}/"
 
 rm-reports:
     if [[ -e ./reports ]]; then rm -r "./reports"; fi
