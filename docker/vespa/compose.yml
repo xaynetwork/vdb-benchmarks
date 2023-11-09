@@ -18,10 +18,10 @@ services:
       - "19092:19092"
     healthcheck: &def_health
       test: curl -sf --head http://localhost:19071/ApplicationStatus
-      interval: 1m30s
+      interval: 10s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 6
+      start_period: 20s
     deploy: &def_deploy
       resources:
         limits:

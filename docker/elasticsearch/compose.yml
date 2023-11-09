@@ -1,11 +1,10 @@
 
 services:
   node-1:
-    image: elasticsearch:8.10.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
     hostname: node-1
     environment:
       "node.name": "node-1"
-      "network.host": "node-1"
       "discovery.seed_hosts": "node-2,node-3"
     volumes:
       # we need to mount the file instead of the dir to not overwrite other configs
@@ -14,12 +13,12 @@ services:
       - log-1:/var/log/elasticsearch:rw
     ports:
       - "9200:9200"
-    healthcheck: &def_health
-      test: curl -sf 'http://localhost:9200/_cluster/health'
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    # healthcheck: &def_health
+    #   test: curl -sf 'http://localhost:9200/_cluster/health'
+    #   interval: 10s
+    #   timeout: 10s
+    #   retries: 6
+    #   start_period: 40s
     deploy: &def_deploy
       resources:
         limits:
@@ -35,7 +34,7 @@ services:
       #   window: 120s
 
   node-2:
-    image: elasticsearch:8.10.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
     hostname: node-2
     environment:
       "node.name": "node-2"
@@ -46,15 +45,14 @@ services:
       - log-2:/var/log/elasticsearch:rw
     ports:
       - "9201:9200"
-    healthcheck: *def_health
+    # healthcheck: *def_health
     deploy: *def_deploy
 
   node-3:
-    image: elasticsearch:8.10.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
     hostname: node-3
     environment:
       "node.name": "node-3"
-      "network.host": "node-3"
       "discovery.seed_hosts": "node-1,node-2"
     volumes:
       - "./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro"
@@ -62,7 +60,7 @@ services:
       - log-3:/var/log/elasticsearch:rw
     ports:
       - "9202:9200"
-    healthcheck: *def_health
+    # healthcheck: *def_health
     deploy: *def_deploy
 
 volumes:

@@ -4,7 +4,8 @@
 #   on port `64{node-i}{last-node-port-digit}` e.g. 6414 => node-1 and grpc (as grpc port internally is 6334)
 services:
   node-1:
-    image: qdrant/qdrant
+    build: ./image
+    image: qdrant-with-curl
     command: ./qdrant --uri 'http://node-1:6335' --config-path ./config/config.yaml
     volumes:
       - "storage-1:/qdrant/storage:rw"
@@ -12,13 +13,13 @@ services:
     ports:
       - "6413:6333"
       - "6414:6334"
-    ## qdrant image has neither curl nor wget
-    # healthcheck: &def_health
-    #   test: curl -f http://localhost:6333/healthz || exit 1
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 40s
+    # qdrant image has neither curl nor wget
+    healthcheck: &def_health
+      test: curl -f http://localhost:6333/healthz || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
     deploy: &def_deploy
       resources:
         limits:
@@ -34,7 +35,8 @@ services:
         window: 120s
 
   node-2:
-    image: qdrant/qdrant
+    build: ./image
+    image: qdrant-with-curl
     # join cluster of node-1
     command: ./qdrant --bootstrap 'http://node-1:6335' --config-path ./config/config.yaml
     volumes:
@@ -50,7 +52,8 @@ services:
     deploy: *def_deploy
 
   node-3:
-    image: qdrant/qdrant
+    build: ./image
+    image: qdrant-with-curl
     # join cluster of node-1
     command: ./qdrant --bootstrap 'http://node-1:6335' --config-path ./config/config.yaml
     volumes:

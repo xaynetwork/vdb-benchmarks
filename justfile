@@ -141,17 +141,15 @@ service operation provider:
 
     case "{{operation}}" in
         up)
-            # --compatibility converts deploy keys to v2 equivalent
-            # otherwise docker compose will respect memory limits but not cpu limits
-            # idk. if memory reservation is respected at all but it is also not needed
-            docker compose --compatibility up --detach
-            exit_hint() {
-                echo "Exit log following, services are STILL RUNNING."
-                echo 'Use `just service down {{provider}}` to stop service.'
-                exit 0
-            }
-            trap exit_hint SIGINT
-            docker compose logs --follow node-1 node-2 node-3
+            # --compatibility converts deploy keys to v2 equivalent, should be needed anymore but does not hurt
+            docker compose --compatibility up --detach --wait
+            # exit_hint() {
+            #     echo "Exit log following, services are STILL RUNNING."
+            #     echo 'Use `just service down {{provider}}` to stop service.'
+            #     exit 0
+            # }
+            # trap exit_hint SIGINT
+            # docker compose logs --follow node-1 node-2 node-3
             ;;
         down)
             docker compose down --volumes --remove-orphans
@@ -165,6 +163,11 @@ service operation provider:
 ## Run Helper                              ##
 #############################################
 
+#TODO change it to always have cycle provider && ingest provider &&  bench provider as chain
+#  1. so we need to fix qdrant health checks
+#  2. change up to no longer attach logs and wait for healthy
+#  3. a just command which chains everything
+#  4. maybe a lower command which chains everything with variants of cpu/mem limit
 bench provider:
     cargo bench --bench "{{provider}}"
 
