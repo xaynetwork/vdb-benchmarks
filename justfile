@@ -199,3 +199,22 @@ cp-reports-for-commit:
     fi
     mv ./reports "${NAME}"
     mv ./target/criterion "${NAME}/"
+
+clean-bench provider cpus mem:
+    #!/usr/bin/env -S bash -eu -o pipefail
+    {{just_executable()}} service down "{{provider}}"
+    export DOCKER_LIMIT_CPUS="{{cpus}}"
+    export DOCKER_LIMIT_MEMORY="{{mem}}"
+    {{just_executable()}} volume recreate "{{provider}}"
+    {{just_executable()}} service up "{{provider}}"
+    sleep 30 #elasticsearch healthcheck do not work properly
+    {{just_executable()}} ingest "{{provider}}"
+    {{just_executable()}} bench"{{provider}}"
+
+clean-bench-all: rm-reports
+    {{just_executable()}} qdrant 4 8
+    {{just_executable()}} qdrant 8 8
+    {{just_executable()}} vespa 4 8
+    {{just_executable()}} vespa 8 8
+    {{just_executable()}} elasticsearch 4 8
+    {{just_executable()}} elasticsearch 8 8
