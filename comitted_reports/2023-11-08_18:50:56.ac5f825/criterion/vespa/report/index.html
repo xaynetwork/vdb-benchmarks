@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>vespa Summary - Criterion.rs</title>
+    <style type="text/css">
+        body {
+            font: 14px Helvetica Neue;
+            text-rendering: optimizelegibility;
+        }
+
+        .body {
+            width: 960px;
+            margin: auto;
+        }
+
+        a:link {
+            color: #1F78B4;
+            text-decoration: none;
+        }
+
+        h2 {
+            font-size: 36px;
+            font-weight: 300;
+        }
+
+        h3 {
+            font-size: 24px;
+            font-weight: 300;
+        }
+
+        #footer {
+            height: 40px;
+            background: #888;
+            color: white;
+            font-size: larger;
+            font-weight: 300;
+        }
+
+        #footer a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        #footer p {
+            text-align: center
+        }
+    </style>
+</head>
+
+<body>
+    <div class="body">
+        <h2>vespa</h2>
+        <h3>Violin Plot</h3>
+        <a href="violin.svg">
+            <img src="violin.svg" alt="Violin Plot" />
+        </a>
+        <p>This chart shows the relationship between function/parameter and iteration time. The thickness of the shaded
+            region indicates the probability that a measurement of the given function/parameter would take a particular
+            length of time.</p>
+        <h3>Line Chart</h3>
+        <img src="lines.svg" alt="Line Chart" />
+        <p>This chart shows the mean measured time for each function as the input (or the size of the input) increases.</p>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-100_100PF-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-100:100PF-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-100_100PF-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-100_100PF-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-100_100PF-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-100_100PF-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-100_100pF-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-100:100pF-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-100_100pF-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-100_100pF-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-100_100pF-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-100_100pF-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-10_1/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:100pF-10:1</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-10_1/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-10_1/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-10_1/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-10_1/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-20_1/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:100pF-20:1</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-20_1/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-20_1/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-20_1/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-20_1/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_1/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:100pF-5:1</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_1/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_1/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_1/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_1/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:100pF-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_100pF-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_10pF-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:10pF-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_10pF-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_10pF-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_10pF-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_10pF-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_10pf-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:10pf-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_10pf-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_10pf-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_10pf-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_10pf-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_200pf-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-10:200pf-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_200pf-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_200pf-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-10_200pf-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-10_200pf-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="plots">
+            <a href="../../vespa/query_throughput/16_100_8.00_8.00-50_50pF-5_10/report/index.html">
+                <h4>vespa/query_throughput/16:100_8.00:8.00-50:50pF-5:10</h4>
+            </a>
+            <table width="100%">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-50_50pF-5_10/report/pdf.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-50_50pF-5_10/report/pdf_small.svg" alt="PDF of Slope" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="../../vespa/query_throughput/16_100_8.00_8.00-50_50pF-5_10/report/regression.svg">
+                                <img src="../../vespa/query_throughput/16_100_8.00_8.00-50_50pF-5_10/report/regression_small.svg" alt="Regression" width="450"
+                                    height="300" />
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+    <div id="footer">
+        <p>This report was generated by
+            <a href="https://github.com/bheisler/criterion.rs">Criterion.rs</a>, a statistics-driven benchmarking
+            library in Rust.</p>
+    </div>
+</body>
+
+</html>
