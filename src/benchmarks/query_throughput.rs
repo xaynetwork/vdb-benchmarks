@@ -191,7 +191,7 @@ pub fn benchmark(
         )?;
     }
 
-    for k in [5, 25, 50] {
+    for k in [5, 25] {
         bench(
             writer,
             &mut group,
