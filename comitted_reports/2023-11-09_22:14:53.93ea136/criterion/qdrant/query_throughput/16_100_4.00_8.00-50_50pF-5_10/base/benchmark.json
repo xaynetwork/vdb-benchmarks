@@ -1,0 +1,1 @@
+{"group_id":"qdrant","function_id":"query_throughput","value_str":"16:100_4.00:8.00-50:50pF-5:10","throughput":{"Elements":50},"full_id":"qdrant/query_throughput/16:100_4.00:8.00-50:50pF-5:10","directory_name":"qdrant/query_throughput/16_100_4.00_8.00-50_50pF-5_10","title":"qdrant/query_throughput/16:100_4.00:8.00-50:50pF-5:10"}

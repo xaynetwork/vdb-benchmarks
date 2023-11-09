@@ -1,0 +1,1 @@
+{"dataset":"gist-960-euclidean","documents":1000000,"ingestion_batch_size":100,"limit_cpus":8.0,"limit_memory":8.0,"vector_size":960}

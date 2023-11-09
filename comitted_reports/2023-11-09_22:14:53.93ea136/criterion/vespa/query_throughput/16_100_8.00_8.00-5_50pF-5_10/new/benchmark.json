@@ -1,0 +1,1 @@
+{"group_id":"vespa","function_id":"query_throughput","value_str":"16:100_8.00:8.00-5:50pF-5:10","throughput":{"Elements":50},"full_id":"vespa/query_throughput/16:100_8.00:8.00-5:50pF-5:10","directory_name":"vespa/query_throughput/16_100_8.00_8.00-5_50pF-5_10","title":"vespa/query_throughput/16:100_8.00:8.00-5:50pF-5:10"}

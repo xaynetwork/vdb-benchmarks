@@ -1,0 +1,1 @@
+{"group_id":"elasticsearch","function_id":"query_throughput","value_str":"16:100_8.00:8.00-10:10pf-5:10","throughput":{"Elements":50},"full_id":"elasticsearch/query_throughput/16:100_8.00:8.00-10:10pf-5:10","directory_name":"elasticsearch/query_throughput/16_100_8.00_8.00-10_10pf-5_10","title":"elasticsearch/query_throughput/16:100_8.00:8.00-10:10pf-5:10"}
