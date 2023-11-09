@@ -212,9 +212,9 @@ clean-bench provider cpus mem:
     {{just_executable()}} bench"{{provider}}"
 
 clean-bench-all: rm-reports
-    {{just_executable()}} qdrant 4 8
-    {{just_executable()}} qdrant 8 8
-    {{just_executable()}} vespa 4 8
-    {{just_executable()}} vespa 8 8
-    {{just_executable()}} elasticsearch 4 8
-    {{just_executable()}} elasticsearch 8 8
+    {{just_executable()}} clean-bench qdrant 4 8
+    {{just_executable()}} clean-bench qdrant 8 8
+    {{just_executable()}} clean-bench vespa 4 8
+    {{just_executable()}} clean-bench vespa 8 8
+    {{just_executable()}} clean-bench elasticsearch 4 8
+    {{just_executable()}} clean-bench elasticsearch 8 8
