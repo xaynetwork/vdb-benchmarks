@@ -191,6 +191,26 @@ pub fn benchmark(
         )?;
     }
 
+    for k in [5, 25, 50] {
+        bench(
+            writer,
+            &mut group,
+            rt,
+            &inputs,
+            ingestion_parameters,
+            QueryParameters {
+                k,
+                fetch_payload: false,
+                ef: 50,
+                number_of_tasks: 5,
+                queries_per_task: 10,
+                use_filters: true,
+                cpus,
+                mem_limit,
+            },
+        )?;
+    }
+
     Ok(())
 }
 
